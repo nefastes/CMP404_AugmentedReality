@@ -32,6 +32,8 @@ public:
 	AARPlaneActor();
 
 	/* The procedural mesh component */
+	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
+		USceneComponent* SceneComponent;
 	UPROPERTY(Category = GoogleARCorePlaneActor, EditAnywhere, BlueprintReadWrite)
 		class UProceduralMeshComponent* PlanePolygonMeshComponent;
 
@@ -50,7 +52,7 @@ public:
 		UMaterialInstanceDynamic* PlaneMaterial;
 
 
-	UMaterialInterface* Material_;
+	UMaterial* Material_;
 protected:
 	// Called at the time of spawning
 	virtual void BeginPlay() override;

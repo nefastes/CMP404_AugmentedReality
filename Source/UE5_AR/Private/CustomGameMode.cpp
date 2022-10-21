@@ -32,6 +32,9 @@ void ACustomGameMode::StartPlay()
 	StartPlayEvent();
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Current Score: %d"), GetScore()));
 
+	// Init the manager
+	pARManager = NewObject<AHelloARManager>();
+
 	// This function will transcend to call BeginPlay on all the actors 
 	Super::StartPlay();
 	
@@ -68,6 +71,16 @@ void ACustomGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	/*bool bIsScreenPressed;
+	auto controller = UGameplayStatics::GetPlayerController(this, 0);
+	FVector2D newTouch;
+	controller->GetInputTouchState(ETouchIndex::Touch1, newTouch.X, newTouch.Y, bIsScreenPressed);
+	if (bIsScreenPressed)
+	{
+		FVector2D delta = newTouch - mPreviousTouch;
+		SpawnedActor->AddActorWorldOffset(FVector(-delta.X, 0, delta.Y));
+		mPreviousTouch = newTouch;
+	}*/
 }
 
 void ACustomGameMode::SpawnInitialActors()
@@ -117,6 +130,8 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 					const FVector MyLoc(0, 0, 0);
 					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(MyLoc, MyRot, SpawnInfo);
 				}
+				
+				
 
 
 				// Set the spawned actor location based on the Pin. Have a look at the code for Placeable Object to see how it handles the AR PIN passed on
@@ -142,5 +157,6 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 			}
 		}
 	}
+	//mPreviousTouch = FVector2D(ScreenPos);
 }
 

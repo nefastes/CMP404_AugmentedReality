@@ -19,15 +19,21 @@
 // Sets default values
 AARPlaneActor::AARPlaneActor()
 {
+	// Initialise the scene component pointer
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
+	// Set the scene component to be the root component for this actor
+	SetRootComponent(SceneComponent);
+
 	PlanePolygonMeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("PlanePolygonMesh"));
-	RootComponent = PlanePolygonMeshComponent;
+	PlanePolygonMeshComponent->SetupAttachment(SceneComponent);
 
 	// Take material from editor
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialAsset(TEXT("Material'/Game/Assets/Materials/ARPlane_Mat.ARPlane_Mat'"));
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset(TEXT("Material'/Game/Assets/Materials/ARPlane_Mat.ARPlane_Mat'"));
 	Material_ = MaterialAsset.Object;
 
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Plane Mesh Spawned"));
 
 }
 
@@ -38,6 +44,7 @@ void AARPlaneActor::BeginPlay()
 	PlaneMaterial = UMaterialInstanceDynamic::Create(Material_, this);
 	PlaneMaterial->SetScalarParameterValue("TextureRotationAngle", FMath::RandRange(0.0f, 1.0f));
 	PlanePolygonMeshComponent->SetMaterial(0, PlaneMaterial);
+	//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, TEXT("Plane Material Created"));
 }
 
 // Called every frame

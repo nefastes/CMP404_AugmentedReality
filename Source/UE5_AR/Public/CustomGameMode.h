@@ -7,6 +7,7 @@
 
 //Forward Declarations
 class APlaceableActor;
+class AHelloARManager;
 
 /**
  * 
@@ -20,6 +21,8 @@ private:
 
 	FTimerHandle Ticker;
 	APlaceableActor* SpawnedActor;
+	AHelloARManager* pARManager;
+	//FVector2D mPreviousTouch;
 
 public:
 	ACustomGameMode();
