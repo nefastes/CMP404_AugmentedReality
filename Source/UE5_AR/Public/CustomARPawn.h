@@ -6,11 +6,17 @@
 #include "CustomARPawn.generated.h"
 
 class UCameraComponent;
+class APlaceableActor;
 
 UCLASS()
 class UE5_AR_API ACustomARPawn : public APawn
 {
 	GENERATED_BODY()
+
+private:
+	bool bIsDragging;
+	FVector2D mPreviousTouch;
+	APlaceableActor* pDraggedActor;
 
 public:
 	// Sets default values for this pawn's properties
@@ -20,7 +26,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void OnScreenTouch(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	FVector DeprojectDrag(FVector2D DragStart, FVector2D DragEnd);
+	FVector DeprojectToWorld(FVector2D screenTouch);
+	bool WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult);
+
+	virtual void OnScreenPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 
 public:	
 	// Called every frame
