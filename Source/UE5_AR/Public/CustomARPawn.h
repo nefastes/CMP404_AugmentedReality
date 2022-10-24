@@ -33,6 +33,9 @@ protected:
 	virtual void OnScreenPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 	virtual void OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -45,5 +48,4 @@ public:
 
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
 		UCameraComponent* CameraComponent;
-
 };

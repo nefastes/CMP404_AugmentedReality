@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "CustomGameMode.h"
 #include "PlaceableActor.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 
 // Sets default values
@@ -46,7 +47,7 @@ void ACustomARPawn::Tick(float DeltaTime)
 		controller->GetInputTouchState(ETouchIndex::Touch1, newTouch.X, newTouch.Y, bIsScreenPressed);
 		if (bIsScreenPressed)
 		{
-			FVector2D drag = newTouch - mPreviousTouch;
+			//FVector2D drag = newTouch - mPreviousTouch;
 			//pDraggedActor->AddActorWorldOffset(FVector(-drag.X, drag.Y, 0));
 			///*FVector actorPos = pDraggedActor->GetActorLocation();
 			//FVector drag = DeprojectDrag(mPreviousTouch, newTouch);
@@ -60,12 +61,14 @@ void ACustomARPawn::Tick(float DeltaTime)
 			//pDraggedActor->SetActorTransform(FTransform(movementMatrix));*/
 			//mPreviousTouch = newTouch;
 
-			FVector worldPos = DeprojectToWorld(drag);
+			FVector worldPos = DeprojectToWorld(newTouch);
 			FVector actorPos = pDraggedActor->GetActorLocation();
-			worldPos.Z = 0;
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Old Pos: " + actorPos.ToString()));
+			worldPos.Z = actorPos.Z;
+			FVector diff = worldPos - actorPos;
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Actor Pos: " + actorPos.ToString()));
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("New Pos: " + worldPos.ToString()));
-			pDraggedActor->AddActorWorldOffset(worldPos);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Offset: " + diff.ToString()));
+			pDraggedActor->SetActorLocation(worldPos);
 		}
 	}
 }
@@ -79,6 +82,11 @@ void ACustomARPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	// There are a few types - BindTouch, BindAxis, and BindEvent.  
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnScreenPressed);
 	PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnScreenReleased);
+
+#ifdef _WIN64
+	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ACustomARPawn::MoveForward);
+	PlayerInputComponent->BindAxis("Move Right / Left", this, &ACustomARPawn::MoveRight);
+#endif
 }
 
 FVector ACustomARPawn::DeprojectDrag(FVector2D DragStart, FVector2D DragEnd)
@@ -136,6 +144,7 @@ void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const F
 			mPreviousTouch = FVector2D(ScreenPos);
 			pDraggedActor = Cast<APlaceableActor>(hitResult.GetActor());
 			pDraggedActor->PinComponent = nullptr;
+			pDraggedActor->SetSelected(true);
 		}
 	}
 }
@@ -152,6 +161,25 @@ void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const 
 		}
 		bIsDragging = false;
 		mPreviousTouch = FVector2D::ZeroVector;
+		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
+	}
+}
+
+void ACustomARPawn::MoveForward(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// add movement in that direction
+		AddMovementInput(GetActorForwardVector(), Value);
+	}
+}
+
+void ACustomARPawn::MoveRight(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// add movement in that direction
+		AddMovementInput(GetActorRightVector(), Value);
 	}
 }

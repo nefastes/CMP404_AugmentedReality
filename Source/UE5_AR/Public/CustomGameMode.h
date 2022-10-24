@@ -24,6 +24,7 @@ private:
 	AHelloARManager* pARManager;
 	UMaterial* pRedMaterial;
 	UMaterial* pBlueMaterial;
+	UMaterial* pSelectedMaterial;
 	UMaterialInstanceDynamic* pDynamicMaterial;
 
 public:

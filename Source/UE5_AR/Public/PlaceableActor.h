@@ -12,10 +12,14 @@ UCLASS()
 class UE5_AR_API APlaceableActor : public AActor
 {
 	GENERATED_BODY()
+	bool bSelected;
 	
 public:	
 	// Sets default values for this actor's properties
 	APlaceableActor();
+
+	void SetSelected(bool s) { bSelected = s; }
+	bool IsSelected() { return bSelected; }
 
 protected:
 	// Called when the game starts or when spawned

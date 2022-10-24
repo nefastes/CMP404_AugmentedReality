@@ -26,6 +26,8 @@ ACustomGameMode::ACustomGameMode():
 	pRedMaterial = MaterialAsset.Object;
 	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset2(TEXT("Material'/Game/Assets/Materials/Blue.Blue'"));
 	pBlueMaterial = MaterialAsset2.Object;
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset3(TEXT("Material'/Game/Assets/Materials/Selected.Selected'"));
+	pSelectedMaterial = MaterialAsset3.Object;
 }
 
 
@@ -78,17 +80,24 @@ void ACustomGameMode::Tick(float DeltaSeconds)
 
 	if (SpawnedActor)
 	{
-		// Change the colour of the actor based on the player distance
-		auto controller = UGameplayStatics::GetPlayerController(this, 0);
-		FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
-		FVector actorPos = SpawnedActor->GetActorLocation();
-		FVector diff = actorPos - cameraPos;
-		if (diff.GetAbs().Length() < 100.0)
-			//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
-			SpawnedActor->StaticMeshComponent->SetMaterial(0, pRedMaterial);
+		if (!SpawnedActor->IsSelected())
+		{
+			// Change the colour of the actor based on the player distance
+			auto controller = UGameplayStatics::GetPlayerController(this, 0);
+			FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
+			FVector actorPos = SpawnedActor->GetActorLocation();
+			FVector diff = actorPos - cameraPos;
+			if (diff.GetAbs().Length() < 100.0)
+				//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
+				SpawnedActor->StaticMeshComponent->SetMaterial(0, pRedMaterial);
+			else
+				//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
+				SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
+		}
 		else
-			//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
-			SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
+		{
+			SpawnedActor->StaticMeshComponent->SetMaterial(0, pSelectedMaterial);
+		}
 	}
 }
 
