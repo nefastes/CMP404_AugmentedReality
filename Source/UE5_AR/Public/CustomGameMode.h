@@ -22,7 +22,9 @@ private:
 	FTimerHandle Ticker;
 	APlaceableActor* SpawnedActor;
 	AHelloARManager* pARManager;
-	//FVector2D mPreviousTouch;
+	UMaterial* pRedMaterial;
+	UMaterial* pBlueMaterial;
+	UMaterialInstanceDynamic* pDynamicMaterial;
 
 public:
 	ACustomGameMode();

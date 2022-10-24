@@ -21,6 +21,11 @@ ACustomGameMode::ACustomGameMode():
 	DefaultPawnClass = ACustomARPawn::StaticClass();
 	GameStateClass = ACustomGameState::StaticClass();
 	
+	// Materials init
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset(TEXT("Material'/Game/Assets/Materials/Colour.Colour'"));
+	pRedMaterial = MaterialAsset.Object;
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset2(TEXT("Material'/Game/Assets/Materials/Blue.Blue'"));
+	pBlueMaterial = MaterialAsset2.Object;
 }
 
 
@@ -71,16 +76,20 @@ void ACustomGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	/*bool bIsScreenPressed;
-	auto controller = UGameplayStatics::GetPlayerController(this, 0);
-	FVector2D newTouch;
-	controller->GetInputTouchState(ETouchIndex::Touch1, newTouch.X, newTouch.Y, bIsScreenPressed);
-	if (bIsScreenPressed)
+	if (SpawnedActor)
 	{
-		FVector2D delta = newTouch - mPreviousTouch;
-		SpawnedActor->AddActorWorldOffset(FVector(-delta.X, 0, delta.Y));
-		mPreviousTouch = newTouch;
-	}*/
+		// Change the colour of the actor based on the player distance
+		auto controller = UGameplayStatics::GetPlayerController(this, 0);
+		FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
+		FVector actorPos = SpawnedActor->GetActorLocation();
+		FVector diff = actorPos - cameraPos;
+		if (diff.GetAbs().Length() < 100.0)
+			//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
+			SpawnedActor->StaticMeshComponent->SetMaterial(0, pRedMaterial);
+		else
+			//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
+			SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
+	}
 }
 
 void ACustomGameMode::SpawnInitialActors()
@@ -129,6 +138,14 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
 					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(MyLoc, MyRot, SpawnInfo);
+
+					// Init dynamic materials
+					/*if (!pDynamicMaterial)
+					{
+						pDynamicMaterial = UMaterialInstanceDynamic::Create(pRedMaterial, SpawnedActor->StaticMeshComponent);
+						SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
+					}*/
+					SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
 				}
 				
 				
@@ -149,6 +166,13 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
 					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
+					// Init dynamic materials
+					/*if (!pDynamicMaterial)
+					{
+						pDynamicMaterial = UMaterialInstanceDynamic::Create(pRedMaterial, SpawnedActor->StaticMeshComponent);
+						SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
+					}*/
+					SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
 				}
 				SpawnedActor->SetActorTransform(TrackedTF);
 				SpawnedActor->SetActorScale3D(FVector(0.2, 0.2, 0.2));
@@ -157,6 +181,5 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 			}
 		}
 	}
-	//mPreviousTouch = FVector2D(ScreenPos);
 }
 

@@ -46,7 +46,7 @@ void ACustomARPawn::Tick(float DeltaTime)
 		controller->GetInputTouchState(ETouchIndex::Touch1, newTouch.X, newTouch.Y, bIsScreenPressed);
 		if (bIsScreenPressed)
 		{
-			//FVector2D drag = newTouch - mPreviousTouch;
+			FVector2D drag = newTouch - mPreviousTouch;
 			//pDraggedActor->AddActorWorldOffset(FVector(-drag.X, drag.Y, 0));
 			///*FVector actorPos = pDraggedActor->GetActorLocation();
 			//FVector drag = DeprojectDrag(mPreviousTouch, newTouch);
@@ -60,10 +60,12 @@ void ACustomARPawn::Tick(float DeltaTime)
 			//pDraggedActor->SetActorTransform(FTransform(movementMatrix));*/
 			//mPreviousTouch = newTouch;
 
-			FVector worldPos = DeprojectToWorld(newTouch);
+			FVector worldPos = DeprojectToWorld(drag);
 			FVector actorPos = pDraggedActor->GetActorLocation();
-			worldPos.Z = actorPos.Z;
-			pDraggedActor->AddActorWorldOffset(worldPos - actorPos);
+			worldPos.Z = 0;
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Old Pos: " + actorPos.ToString()));
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("New Pos: " + worldPos.ToString()));
+			pDraggedActor->AddActorWorldOffset(worldPos);
 		}
 	}
 }
