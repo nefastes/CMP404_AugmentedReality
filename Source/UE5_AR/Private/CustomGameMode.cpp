@@ -39,9 +39,6 @@ void ACustomGameMode::StartPlay()
 	StartPlayEvent();
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Current Score: %d"), GetScore()));
 
-	// Init the manager
-	pARManager = NewObject<AHelloARManager>();
-
 	// This function will transcend to call BeginPlay on all the actors 
 	Super::StartPlay();
 	
@@ -105,7 +102,8 @@ void ACustomGameMode::SpawnInitialActors()
 {
 
 	// Spawn an instance of the HelloARManager class
-
+	//pARManager = NewObject<AHelloARManager>();		// NO!
+	pARManager = GetWorld()->SpawnActor<AHelloARManager>();
 }
 
 
@@ -146,7 +144,7 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 					const FActorSpawnParameters SpawnInfo;
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
-					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(MyLoc, MyRot, SpawnInfo);
+					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
 
 					// Init dynamic materials
 					/*if (!pDynamicMaterial)
