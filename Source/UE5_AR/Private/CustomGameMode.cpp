@@ -12,7 +12,10 @@
 #include "PlaceableActor.h"
 
 ACustomGameMode::ACustomGameMode():
-	SpawnedActor(nullptr)
+	SpawnedActor(nullptr),
+	pARManager(nullptr),
+	pColourMaterial(nullptr),
+	pDynamicMaterial(nullptr)
 {
 	// Add this line to your code if you wish to use the Tick() function
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,11 +26,7 @@ ACustomGameMode::ACustomGameMode():
 	
 	// Materials init
 	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset(TEXT("Material'/Game/Assets/Materials/Colour.Colour'"));
-	pRedMaterial = MaterialAsset.Object;
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset2(TEXT("Material'/Game/Assets/Materials/Blue.Blue'"));
-	pBlueMaterial = MaterialAsset2.Object;
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset3(TEXT("Material'/Game/Assets/Materials/Selected.Selected'"));
-	pSelectedMaterial = MaterialAsset3.Object;
+	pColourMaterial = MaterialAsset.Object;
 }
 
 
@@ -35,14 +34,15 @@ void ACustomGameMode::StartPlay()
 {
 	SpawnInitialActors();
 
+	pDynamicMaterial = UMaterialInstanceDynamic::Create(pColourMaterial, this);
+	//SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
+
 	// This is called before BeginPlay
 	StartPlayEvent();
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Current Score: %d"), GetScore()));
 
 	// This function will transcend to call BeginPlay on all the actors 
 	Super::StartPlay();
-	
-
 }
 
 // An implementation of the StartPlayEvent which can be triggered by calling StartPlayEvent() 
@@ -60,7 +60,6 @@ int32 ACustomGameMode::GetScore()
 void ACustomGameMode::SetScore(const int32 NewScore)
 {
 	GetGameState<ACustomGameState>()->Score = NewScore;
-
 }
 
 void ACustomGameMode::SpawnCube()
@@ -85,15 +84,13 @@ void ACustomGameMode::Tick(float DeltaSeconds)
 			FVector actorPos = SpawnedActor->GetActorLocation();
 			FVector diff = actorPos - cameraPos;
 			if (diff.GetAbs().Length() < 100.0)
-				//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
-				SpawnedActor->StaticMeshComponent->SetMaterial(0, pRedMaterial);
+				pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
 			else
-				//pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
-				SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
+				pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
 		}
 		else
 		{
-			SpawnedActor->StaticMeshComponent->SetMaterial(0, pSelectedMaterial);
+			pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 1.f, 0.f));
 		}
 	}
 }
@@ -147,16 +144,8 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
 
 					// Init dynamic materials
-					/*if (!pDynamicMaterial)
-					{
-						pDynamicMaterial = UMaterialInstanceDynamic::Create(pRedMaterial, SpawnedActor->StaticMeshComponent);
-						SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
-					}*/
-					SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
+					SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
 				}
-				
-				
-
 
 				// Set the spawned actor location based on the Pin. Have a look at the code for Placeable Object to see how it handles the AR PIN passed on
 				SpawnedActor->SetActorTransform(PinTF);
@@ -174,17 +163,10 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 					const FVector MyLoc(0, 0, 0);
 					SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
 					// Init dynamic materials
-					/*if (!pDynamicMaterial)
-					{
-						pDynamicMaterial = UMaterialInstanceDynamic::Create(pRedMaterial, SpawnedActor->StaticMeshComponent);
-						SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
-					}*/
-					SpawnedActor->StaticMeshComponent->SetMaterial(0, pBlueMaterial);
+					SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
 				}
 				SpawnedActor->SetActorTransform(TrackedTF);
 				SpawnedActor->SetActorScale3D(FVector(0.2, 0.2, 0.2));
-
-
 			}
 		}
 	}

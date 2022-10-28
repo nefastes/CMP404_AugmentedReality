@@ -22,9 +22,7 @@ private:
 	FTimerHandle Ticker;
 	APlaceableActor* SpawnedActor;
 	AHelloARManager* pARManager;
-	UMaterial* pRedMaterial;
-	UMaterial* pBlueMaterial;
-	UMaterial* pSelectedMaterial;
+	UMaterial* pColourMaterial;
 	UMaterialInstanceDynamic* pDynamicMaterial;
 
 public:

@@ -30,8 +30,6 @@ ACustomARPawn::ACustomARPawn()
 void ACustomARPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	//UARSessionConfig* Config = NewObject<UARSessionConfig>();
-	//UARBlueprintLibrary::StartARSession(Config);
 }
 
 // Called every frame
