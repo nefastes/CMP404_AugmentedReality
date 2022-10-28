@@ -16,6 +16,8 @@ class UE5_AR_API AHelloARManager : public AActor
 {
 	GENERATED_BODY()
 	
+	bool bAllowPlaneUpdate;
+
 public:	
 	// Sets default values for this actor's properties
 	AHelloARManager();
@@ -27,6 +29,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void AllowPlaneUpdate(bool allow);
+	void SetPlanesActive(bool active);
 
 	//Create a default Scene Component
 	UPROPERTY(Category = "SceneComp", VisibleAnywhere, BlueprintReadWrite)

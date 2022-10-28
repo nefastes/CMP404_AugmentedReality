@@ -10,6 +10,7 @@
 #include "CustomGameMode.h"
 #include "PlaceableActor.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "HelloARManager.h"
 
 
 // Sets default values
@@ -20,9 +21,7 @@ ACustomARPawn::ACustomARPawn()
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 	SetRootComponent(SceneComponent);
 
-
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
-	
 	CameraComponent->SetupAttachment(SceneComponent);
 }
 
@@ -37,36 +36,16 @@ void ACustomARPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bIsDragging)
+	if (pDraggedActor && pDraggedActor->IsSelected())
 	{
 		bool bIsScreenPressed;
-		auto controller = UGameplayStatics::GetPlayerController(this, 0);
+		const auto controller = UGameplayStatics::GetPlayerController(this, 0);
 		FVector2D newTouch;
 		controller->GetInputTouchState(ETouchIndex::Touch1, newTouch.X, newTouch.Y, bIsScreenPressed);
 		if (bIsScreenPressed)
 		{
-			//FVector2D drag = newTouch - mPreviousTouch;
-			//pDraggedActor->AddActorWorldOffset(FVector(-drag.X, drag.Y, 0));
-			///*FVector actorPos = pDraggedActor->GetActorLocation();
-			//FVector drag = DeprojectDrag(mPreviousTouch, newTouch);
-			//actorPos += drag;
-			//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("DRAG: " + drag.ToString()));
-
-			//FMatrix movementMatrix(FMatrix::Identity);
-			//movementMatrix.M[3][0] = actorPos.X;
-			//movementMatrix.M[3][1] = actorPos.Y;
-			//movementMatrix.M[3][2] = actorPos.Z;
-			//pDraggedActor->SetActorTransform(FTransform(movementMatrix));*/
-			//mPreviousTouch = newTouch;
-
-			FVector worldPos = DeprojectToWorld(newTouch);
-			FVector actorPos = pDraggedActor->GetActorLocation();
-			worldPos.Z = actorPos.Z;
-			FVector diff = worldPos - actorPos;
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Actor Pos: " + actorPos.ToString()));
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("New Pos: " + worldPos.ToString()));
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Offset: " + diff.ToString()));
-			pDraggedActor->SetActorLocation(worldPos);
+			const auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(newTouch, false, false, false, true);
+			if (TraceResult.IsValidIndex(0)) pDraggedActor->SetActorTransform((TraceResult[0].GetLocalToWorldTransform()));
 		}
 	}
 }
@@ -85,15 +64,6 @@ void ACustomARPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ACustomARPawn::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &ACustomARPawn::MoveRight);
 #endif
-}
-
-FVector ACustomARPawn::DeprojectDrag(FVector2D DragStart, FVector2D DragEnd)
-{
-	FVector worldPositionStart, worldPositionEnd, worldDirection;
-	auto controller = UGameplayStatics::GetPlayerController(this, 0);
-	UGameplayStatics::DeprojectScreenToWorld(controller, DragStart, worldPositionStart, worldDirection);
-	UGameplayStatics::DeprojectScreenToWorld(controller, DragEnd, worldPositionEnd, worldDirection);
-	return worldPositionEnd - worldPositionStart;
 }
 
 FVector ACustomARPawn::DeprojectToWorld(FVector2D ScreenTouch)
@@ -138,18 +108,20 @@ void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const F
 		if (UKismetMathLibrary::ClassIsChildOf(hitActorClass, APlaceableActor::StaticClass()))
 		{
 			UKismetSystemLibrary::PrintString(this, FString(TEXT("\t\tActor pressed.")), true, true, FLinearColor::Red, 5);
-			bIsDragging = true;
 			mPreviousTouch = FVector2D(ScreenPos);
 			pDraggedActor = Cast<APlaceableActor>(hitResult.GetActor());
+			UARBlueprintLibrary::RemovePin((pDraggedActor->PinComponent));
 			pDraggedActor->PinComponent = nullptr;
 			pDraggedActor->SetSelected(true);
+			GM->GetARManager()->AllowPlaneUpdate(false);
+			GM->GetARManager()->SetPlanesActive(false);
 		}
 	}
 }
 
 void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
-	if (bIsDragging)
+	if (pDraggedActor && pDraggedActor->IsSelected())
 	{
 		auto Temp = GetWorld()->GetAuthGameMode();
 		auto GM = Cast<ACustomGameMode>(Temp);
@@ -157,10 +129,11 @@ void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const 
 		{
 			GM->LineTraceSpawnActor(ScreenPos);
 		}
-		bIsDragging = false;
 		mPreviousTouch = FVector2D::ZeroVector;
 		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
+		GM->GetARManager()->AllowPlaneUpdate(true);
+		GM->GetARManager()->SetPlanesActive(true);
 	}
 }
 

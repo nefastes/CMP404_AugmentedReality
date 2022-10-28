@@ -34,7 +34,7 @@ void ACustomGameMode::StartPlay()
 {
 	SpawnInitialActors();
 
-	pDynamicMaterial = UMaterialInstanceDynamic::Create(pColourMaterial, this);
+	pDynamicMaterial = UMaterialInstanceDynamic::Create(pColourMaterial, this); // InOuter references which object to attach this onto
 	//SpawnedActor->StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
 
 	// This is called before BeginPlay
@@ -43,6 +43,11 @@ void ACustomGameMode::StartPlay()
 
 	// This function will transcend to call BeginPlay on all the actors 
 	Super::StartPlay();
+}
+
+AHelloARManager* ACustomGameMode::GetARManager()
+{
+	return pARManager;
 }
 
 // An implementation of the StartPlayEvent which can be triggered by calling StartPlayEvent() 
@@ -106,17 +111,22 @@ void ACustomGameMode::SpawnInitialActors()
 
 void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 {
+	LineTraceSpawnActor(FVector2D(ScreenPos));
+}
+
+void ACustomGameMode::LineTraceSpawnActor(FVector2D ScreenPos)
+{
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Line Trace Reached"));
 
 	//Basic variables for functionality
 	APlayerController* playerController = UGameplayStatics::GetPlayerController(this, 0);
-	FVector WorldPos;
-	FVector WorldDir;
+	FVector CameraPos;
+	FVector CameraDir;
 
 	//Gets the screen touch in world space and the tracked objects from a line trace from the touch
-	UGameplayStatics::DeprojectScreenToWorld(playerController, FVector2D(ScreenPos), WorldPos, WorldDir);
+	UGameplayStatics::DeprojectScreenToWorld(playerController, ScreenPos, CameraPos, CameraDir);
 	// Notice that this LineTrace is in the ARBluePrintLibrary - this means that it's exclusive only for objects tracked by ARKit/ARCore
-	auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(FVector2D(ScreenPos), false, false, false, true);
+	auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(ScreenPos, false, false, false, true);
 
 	//Checks if the location is valid
 	if (TraceResult.IsValidIndex(0))
@@ -124,11 +134,11 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 		// Get the first found object in the line trace - ignoring the rest of the array elements
 		auto TrackedTF = TraceResult[0].GetLocalToWorldTransform();
 
-		if (FVector::DotProduct(TrackedTF.GetRotation().GetUpVector(), WorldDir) < 0)
+		if (FVector::DotProduct(TrackedTF.GetRotation().GetUpVector(), CameraDir) < 0)
 		{
 			//Spawn the actor pin and get the transform
 			UARPin* ActorPin = UARBlueprintLibrary::PinComponent(nullptr, TraceResult[0].GetLocalToWorldTransform(), TraceResult[0].GetTrackedGeometry());
-
+			
 			// Check if ARPins are available on your current device. ARPins are currently not supported locally by ARKit, so on iOS, this will always be "FALSE" 
 			if (ActorPin)
 			{
@@ -150,10 +160,10 @@ void ACustomGameMode::LineTraceSpawnActor(FVector ScreenPos)
 				// Set the spawned actor location based on the Pin. Have a look at the code for Placeable Object to see how it handles the AR PIN passed on
 				SpawnedActor->SetActorTransform(PinTF);
 				SpawnedActor->PinComponent = ActorPin;
-			
+
 			}
 			// IF ARPins are Not supported locally (for iOS Devices) We will spawn the object in the location where the line trace has hit
-			else{
+			else {
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("ARPin is invalid"));
 				//Spawn a new Actor at the location if not done yet
 				if (!SpawnedActor)

@@ -32,6 +32,7 @@ public:
 
 	virtual void StartPlay() override;
 
+	AHelloARManager* GetARManager();
 
 	/**
 	 * @brief An example of an event as generally seen within the Event Graph of Blueprints
@@ -60,6 +61,7 @@ public:
 	 * @param ScreenPos Pass the Screen Position as an FVector
 	 */
 	virtual void LineTraceSpawnActor(FVector ScreenPos);
+	virtual void LineTraceSpawnActor(FVector2D ScreenPos);
 	
 
 	/**

@@ -6,10 +6,12 @@
 #include "ARPin.h"
 #include "ARSessionConfig.h"
 #include "ARBlueprintLibrary.h"
+#include "ProceduralMeshComponent.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 
 // Sets default values
-AHelloARManager::AHelloARManager()
+AHelloARManager::AHelloARManager() :
+	bAllowPlaneUpdate(true)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -58,7 +60,7 @@ void AHelloARManager::Tick(float DeltaTime)
 	{
 	case EARSessionStatus::Running:
 		
-		UpdatePlaneActors();
+		if(bAllowPlaneUpdate) UpdatePlaneActors();
 		break;
 
 	case EARSessionStatus::FatalError:
@@ -69,6 +71,17 @@ void AHelloARManager::Tick(float DeltaTime)
 	}
 }
 
+void AHelloARManager::AllowPlaneUpdate(bool allow)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Chaning planes bool"));
+	bAllowPlaneUpdate = allow;
+}
+
+void AHelloARManager::SetPlanesActive(bool active)
+{
+	for(auto& plane : PlaneActors)
+		plane.Value->SetActorHiddenInGame(!active);
+}
 
 
 //Updates the geometry actors in the world

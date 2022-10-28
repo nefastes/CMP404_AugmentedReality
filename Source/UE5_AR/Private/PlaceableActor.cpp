@@ -47,9 +47,6 @@ void APlaceableActor::Tick(float DeltaTime)
 		case EARTrackingState::Tracking:
 			SceneComponent->SetVisibility(true);
 			SetActorTransform(PinComponent->GetLocalToWorldTransform());
-
-			// Scale down default cube mesh - Change this for your applications.
-			SetActorScale3D(FVector(0.2f, 0.2f, 0.2f));
 			break;
 
 		case EARTrackingState::NotTracking:

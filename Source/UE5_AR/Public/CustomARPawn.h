@@ -14,7 +14,6 @@ class UE5_AR_API ACustomARPawn : public APawn
 	GENERATED_BODY()
 
 private:
-	bool bIsDragging;
 	FVector2D mPreviousTouch;
 	APlaceableActor* pDraggedActor;
 
@@ -26,7 +25,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	FVector DeprojectDrag(FVector2D DragStart, FVector2D DragEnd);
 	FVector DeprojectToWorld(FVector2D screenTouch);
 	bool WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult);
 
