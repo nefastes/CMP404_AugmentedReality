@@ -85,6 +85,7 @@ void ACustomARPawn::Tick(float DeltaTime)
 					transform.SetScale3D(FVector(.1, .1, .1));
 					pEarthActor = GetWorld()->SpawnActor<ACustomActor>(EarthActor, transform.GetLocation(), FRotator(transform.GetRotation()), spawnParams);
 					pEarthActor->SetActorScale3D(transform.GetScale3D());
+					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Spawned earth actor at " + pEarthActor->GetActorLocation().ToString()));
 				}
 				else
 				{
