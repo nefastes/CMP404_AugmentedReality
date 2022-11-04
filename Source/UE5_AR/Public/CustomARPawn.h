@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "CustomActor.h"
 #include "GameFramework/Pawn.h"
 #include "CustomARPawn.generated.h"
 
@@ -16,6 +17,7 @@ class UE5_AR_API ACustomARPawn : public APawn
 private:
 	FVector2D mPreviousTouch;
 	APlaceableActor* pDraggedActor;
+	ACustomActor* pGoghActor, *pEarthActor;
 
 public:
 	// Sets default values for this pawn's properties
@@ -46,4 +48,9 @@ public:
 
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
 		UCameraComponent* CameraComponent;
+
+	UPROPERTY(Category="Placeable",EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ACustomActor> EarthActor;
+	UPROPERTY(Category="Placeable",EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<ACustomActor> GoghActor;
 };

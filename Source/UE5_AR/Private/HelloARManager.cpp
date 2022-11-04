@@ -21,7 +21,7 @@ AHelloARManager::AHelloARManager() :
 	// Instead let unreal deal with this. Usually avoid this method of referencing.
 	// For long term games, create a Data-Only blueprint (A blueprint without any script in it) and set references to the object using the blueprint editor.
 	// This way, unreal will notify your artist if the asset is being used and what can be used to replace it.
-	static ConstructorHelpers::FObjectFinder<UARSessionConfig> ConfigAsset(TEXT("ARSessionConfig'/Game/Blueprints/HelloARSessionConfig.HelloARSessionConfig'"));
+	static ConstructorHelpers::FObjectFinder<UARSessionConfig> ConfigAsset(TEXT("ARSessionConfig'/Game/Blueprints/CustomARSessionConfig.CustomARSessionConfig'"));
 	Config = ConfigAsset.Object;
 
 

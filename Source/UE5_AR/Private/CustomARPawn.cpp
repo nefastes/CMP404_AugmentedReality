@@ -14,7 +14,7 @@
 
 
 // Sets default values
-ACustomARPawn::ACustomARPawn()
+ACustomARPawn::ACustomARPawn() : pDraggedActor(nullptr), pGoghActor(nullptr), pEarthActor(nullptr)
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -46,6 +46,52 @@ void ACustomARPawn::Tick(float DeltaTime)
 		{
 			const auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(newTouch, false, false, false, true);
 			if (TraceResult.IsValidIndex(0)) pDraggedActor->SetActorTransform((TraceResult[0].GetLocalToWorldTransform()));
+		}
+	}
+
+	// loop through all tracked images and see if van gogh was found
+	TArray<UARTrackedImage*> images = UARBlueprintLibrary::GetAllGeometriesByClass<UARTrackedImage>();
+	for(int32_t i = 0; i < images.Num(); ++i)
+	{
+		const UARCandidateImage* trackedImage = images[i]->GetDetectedImage();
+		if(trackedImage)
+		{
+			if(trackedImage->GetFriendlyName().Equals(TEXT("Vgogh")))
+			{
+				// Store all the information to spawn a cube on this image
+				if(!pGoghActor)
+				{
+					FActorSpawnParameters spawnParams;
+					auto transform = images[i]->GetLocalToTrackingTransform();
+					transform.SetScale3D(FVector(.1, .1, .1));
+					pGoghActor = GetWorld()->SpawnActor<ACustomActor>(GoghActor, transform.GetLocation(), FRotator(transform.GetRotation()), spawnParams);
+					// auto cubeSpawnTransform = images[i]->GetLocalToWorldTransform();
+					// pGoghActor = GetWorld()->SpawnActor<APlaceableActor>(cubeSpawnTransform.GetLocation(), FRotator(cubeSpawnTransform.GetRotation()), spawnParams);
+					pGoghActor->SetActorScale3D(transform.GetScale3D());
+				}
+				else
+				{
+					auto transform = images[i]->GetLocalToTrackingTransform();
+					pGoghActor->StartLocation = transform.GetLocation();
+				}
+			}
+			else if(trackedImage->GetFriendlyName().Equals(TEXT("Earth")))
+			{
+				// Store all the information to spawn a cube on this image
+				if(!pEarthActor)
+				{
+					FActorSpawnParameters spawnParams;
+					auto transform = images[i]->GetLocalToTrackingTransform();
+					transform.SetScale3D(FVector(.1, .1, .1));
+					pEarthActor = GetWorld()->SpawnActor<ACustomActor>(EarthActor, transform.GetLocation(), FRotator(transform.GetRotation()), spawnParams);
+					pEarthActor->SetActorScale3D(transform.GetScale3D());
+				}
+				else
+				{
+					auto transform = images[i]->GetLocalToTrackingTransform();
+					pEarthActor->StartLocation = transform.GetLocation();
+				}
+			}	
 		}
 	}
 }

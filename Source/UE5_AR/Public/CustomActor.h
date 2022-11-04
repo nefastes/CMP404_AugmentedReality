@@ -31,5 +31,4 @@ public:
 		UStaticMeshComponent* StaticMeshComponent;
 
 	FVector StartLocation;
-
 };

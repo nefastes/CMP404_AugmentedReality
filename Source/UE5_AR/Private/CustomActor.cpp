@@ -42,7 +42,5 @@ void ACustomActor::Tick(float DeltaTime)
 	y = scale * sin(2.0f * t) / 2.0f;
 
 	SetActorLocation(FVector(StartLocation.X , StartLocation.Y + x, StartLocation.Z +y));
-
-
 }
 
