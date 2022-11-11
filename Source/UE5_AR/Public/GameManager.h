@@ -37,6 +37,10 @@ public:
 	UPROPERTY(Category="Placeable",EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<APlaceableActor> PlacableToSpawn;
 
+	// Call this function when the user presses the button to accept the hoop placement
+	UFUNCTION(BlueprintCallable, Category="StartGame")
+	bool AcceptHoopAndStartGame();
+
 	// Functions to spawn a basketball from the touch position on the screen
 	void SpawnBasketball(FVector ScreenPos);
 	void SpawnBasketball(FVector2D ScreenPos);

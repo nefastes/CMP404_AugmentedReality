@@ -32,6 +32,8 @@ public:
 	virtual void StartPlay() override;
 
 	AHelloARManager* GetARManager() const;
+
+	UFUNCTION(BlueprintCallable)
 	AGameManager* GetGameManager() const;
 
 	/**

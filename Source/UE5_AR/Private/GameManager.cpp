@@ -5,6 +5,8 @@
 
 #include "ARBlueprintLibrary.h"
 #include "ARPin.h"
+#include "CustomGameMode.h"
+#include "HelloARManager.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -132,5 +134,25 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 			}
 		}
 	}
+}
+
+bool AGameManager::AcceptHoopAndStartGame()
+{
+	if(pHoop)
+	{
+		auto Temp = GetWorld()->GetAuthGameMode();
+		auto GameMode = Cast<ACustomGameMode>(Temp);
+		auto ARManager = GameMode->GetARManager();
+		
+		// Disable the tracking of the environment
+		ARManager->AllowPlaneUpdate(false);
+		ARManager->SetPlanesActive(false);
+
+		// Disable hoop placement
+		
+		
+		return true;
+	}
+	return false;
 }
 

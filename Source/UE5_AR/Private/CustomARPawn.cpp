@@ -37,7 +37,7 @@ void ACustomARPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (pDraggedActor && pDraggedActor->IsSelected())
+	if (pDraggedActor)
 	{
 		bool bIsScreenPressed;
 		const auto controller = UGameplayStatics::GetPlayerController(this, 0);
@@ -107,11 +107,6 @@ void ACustomARPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	// There are a few types - BindTouch, BindAxis, and BindEvent.  
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnScreenPressed);
 	PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnScreenReleased);
-
-#ifdef _WIN64
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ACustomARPawn::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &ACustomARPawn::MoveRight);
-#endif
 }
 
 FVector ACustomARPawn::DeprojectToWorld(FVector2D ScreenTouch)
@@ -159,7 +154,6 @@ void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const F
 		if (UKismetMathLibrary::ClassIsChildOf(hitActorClass, APlaceableActor::StaticClass()))
 		{
 			UKismetSystemLibrary::PrintString(this, FString(TEXT("\t\tActor pressed.")), true, true, FLinearColor::Red, 5);
-			mPreviousTouch = FVector2D(ScreenPos);
 			pDraggedActor = Cast<APlaceableActor>(hitResult.GetActor());
 			UARBlueprintLibrary::RemovePin((pDraggedActor->PinComponent));
 			pDraggedActor->PinComponent = nullptr;
@@ -172,7 +166,7 @@ void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const F
 
 void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
-	if (pDraggedActor && pDraggedActor->IsSelected())
+	if (pDraggedActor)
 	{
 		auto Temp = GetWorld()->GetAuthGameMode();
 		auto GameMode = Cast<ACustomGameMode>(Temp);
@@ -183,28 +177,9 @@ void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const 
 		{
 			GameManager->LineTraceSpawnActor(ScreenPos);
 		}
-		mPreviousTouch = FVector2D::ZeroVector;
 		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
 		ARManager->AllowPlaneUpdate(true);
 		ARManager->SetPlanesActive(true);
-	}
-}
-
-void ACustomARPawn::MoveForward(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorForwardVector(), Value);
-	}
-}
-
-void ACustomARPawn::MoveRight(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorRightVector(), Value);
 	}
 }

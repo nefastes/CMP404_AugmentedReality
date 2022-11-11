@@ -15,7 +15,6 @@ class UE5_AR_API ACustomARPawn : public APawn
 	GENERATED_BODY()
 
 private:
-	FVector2D mPreviousTouch;
 	APlaceableActor* pDraggedActor;
 	ACustomActor* pGoghActor, *pEarthActor;
 
@@ -32,9 +31,6 @@ protected:
 
 	virtual void OnScreenPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 	virtual void OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-
-	void MoveForward(float Value);
-	void MoveRight(float Value);
 
 public:	
 	// Called every frame
