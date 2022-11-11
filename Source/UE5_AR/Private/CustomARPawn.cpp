@@ -8,6 +8,7 @@
 #include "ARBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "CustomGameMode.h"
+#include "GameManager.h"
 #include "PlaceableActor.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "HelloARManager.h"
@@ -140,14 +141,17 @@ bool ACustomARPawn::WorldHitTest(const FVector& InTouchPosition, FHitResult& Out
 void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	auto Temp = GetWorld()->GetAuthGameMode();
-	auto GM = Cast<ACustomGameMode>(Temp);
+	auto GameMode = Cast<ACustomGameMode>(Temp);
+	auto GameManager = GameMode->GetGameManager();
+	auto ARManager = GameMode->GetARManager();
+	
 
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("ScreenTouch Reached"));
 
 	FHitResult hitResult;
-	if (!WorldHitTest(ScreenPos, hitResult) && GM)
+	if (!WorldHitTest(ScreenPos, hitResult) && GameManager)
 	{
-		GM->LineTraceSpawnActor(ScreenPos);
+		GameManager->LineTraceSpawnActor(ScreenPos);
 	}
 	else
 	{
@@ -160,8 +164,8 @@ void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const F
 			UARBlueprintLibrary::RemovePin((pDraggedActor->PinComponent));
 			pDraggedActor->PinComponent = nullptr;
 			pDraggedActor->SetSelected(true);
-			GM->GetARManager()->AllowPlaneUpdate(false);
-			GM->GetARManager()->SetPlanesActive(false);
+			ARManager->AllowPlaneUpdate(false);
+			ARManager->SetPlanesActive(false);
 		}
 	}
 }
@@ -171,16 +175,19 @@ void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const 
 	if (pDraggedActor && pDraggedActor->IsSelected())
 	{
 		auto Temp = GetWorld()->GetAuthGameMode();
-		auto GM = Cast<ACustomGameMode>(Temp);
-		if (GM)
+		auto GameMode = Cast<ACustomGameMode>(Temp);
+		auto GameManager = GameMode->GetGameManager();
+		auto ARManager = GameMode->GetARManager();
+		
+		if (GameManager)
 		{
-			GM->LineTraceSpawnActor(ScreenPos);
+			GameManager->LineTraceSpawnActor(ScreenPos);
 		}
 		mPreviousTouch = FVector2D::ZeroVector;
 		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
-		GM->GetARManager()->AllowPlaneUpdate(true);
-		GM->GetARManager()->SetPlanesActive(true);
+		ARManager->AllowPlaneUpdate(true);
+		ARManager->SetPlanesActive(true);
 	}
 }
 

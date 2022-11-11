@@ -16,7 +16,8 @@ class UE5_AR_API ACustomGameState : public AGameStateBase
 public:
 	ACustomGameState();
 	~ACustomGameState() = default;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Score;
 
 };
