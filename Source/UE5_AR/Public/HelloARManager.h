@@ -3,6 +3,7 @@
 #pragma once
 
 
+#include "ARTextures.h"
 #include "GameFramework/Actor.h"
 #include "HelloARManager.generated.h"
 
@@ -37,7 +38,7 @@ public:
 	UPROPERTY(Category = "SceneComp", VisibleAnywhere, BlueprintReadWrite)
 		USceneComponent* SceneComponent;
 
-
+	const UARTexture* GetDepthMap() const; 
 
 protected:
 	
@@ -60,5 +61,8 @@ protected:
 	//Index for plane colours adn array of colours
 	int PlaneIndex = 0;
 	TArray<FColor> PlaneColors;
+
+	// Store the depth map on update
+	UARTexture* pDepthMap, *pCameraMap;
 
 };

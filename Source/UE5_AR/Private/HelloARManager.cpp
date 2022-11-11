@@ -11,7 +11,9 @@
 
 // Sets default values
 AHelloARManager::AHelloARManager() :
-	bAllowPlaneUpdate(true)
+bAllowPlaneUpdate(true),
+pDepthMap(nullptr),
+pCameraMap(nullptr)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,6 +25,8 @@ AHelloARManager::AHelloARManager() :
 	// This way, unreal will notify your artist if the asset is being used and what can be used to replace it.
 	static ConstructorHelpers::FObjectFinder<UARSessionConfig> ConfigAsset(TEXT("ARSessionConfig'/Game/Blueprints/CustomARSessionConfig.CustomARSessionConfig'"));
 	Config = ConfigAsset.Object;
+	//Config->bUseSceneDepthForOcclusion = true;	// Already done in config file
+	//Config->SetSessionTrackingFeatureToEnable(EARSessionTrackingFeature::SceneDepth);
 
 
 	//Populate the plane colours array
@@ -61,6 +65,10 @@ void AHelloARManager::Tick(float DeltaTime)
 	case EARSessionStatus::Running:
 		
 		if(bAllowPlaneUpdate) UpdatePlaneActors();
+		pDepthMap = UARBlueprintLibrary::GetARTexture(EARTextureType::SceneDepthMap);
+		if(!pDepthMap)
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("DepthMap is bad..."));
+		pCameraMap = UARBlueprintLibrary::GetARTexture(EARTextureType::CameraImage);
 		break;
 
 	case EARSessionStatus::FatalError:
@@ -83,6 +91,11 @@ void AHelloARManager::SetPlanesActive(bool active)
 		plane.Value->SetActorHiddenInGame(!active);
 }
 
+
+const UARTexture* AHelloARManager::GetDepthMap() const
+{
+	return pDepthMap;
+}
 
 //Updates the geometry actors in the world
 void AHelloARManager::UpdatePlaneActors()
