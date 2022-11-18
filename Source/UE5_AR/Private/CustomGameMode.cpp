@@ -46,20 +46,11 @@ AGameManager* ACustomGameMode::GetGameManager() const
 	return pGameManager;
 }
 
-
 // An implementation of the StartPlayEvent which can be triggered by calling StartPlayEvent() 
 void ACustomGameMode::StartPlayEvent_Implementation() 
 {
 	// Start a timer which will call the SpawnCube Function every 4 seconds
 	//GetWorldTimerManager().SetTimer(Ticker, this, &ACustomGameMode::SpawnCube, 4.0f, true, 0.0f);
-}
-
-void ACustomGameMode::SpawnCube()
-{
-	const FActorSpawnParameters SpawnInfo;
-	const FRotator MyRot(0, 0, 0);
-	const FVector MyLoc(-300, 0, 0);
-	ACustomActor* CustomActor = GetWorld()->SpawnActor<ACustomActor>(MyLoc, MyRot, SpawnInfo);
 }
 
 void ACustomGameMode::Tick(float DeltaSeconds)
@@ -69,7 +60,7 @@ void ACustomGameMode::Tick(float DeltaSeconds)
 
 void ACustomGameMode::SpawnInitialActors()
 {
-	// This function spawns the required actores to run the game
+	// This function spawns the required actors to run the game
 	
 	//pARManager = NewObject<AHelloARManager>();								// NO! Otherwise their StartPlay does not get called!
 	pARManager = GetWorld()->SpawnActor<AHelloARManager>();						// In charge of all the AR side functionalities

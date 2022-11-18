@@ -65,10 +65,10 @@ void AHelloARManager::Tick(float DeltaTime)
 	case EARSessionStatus::Running:
 		
 		if(bAllowPlaneUpdate) UpdatePlaneActors();
-		pDepthMap = UARBlueprintLibrary::GetARTexture(EARTextureType::SceneDepthMap);
-		if(!pDepthMap)
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("DepthMap is bad..."));
-		pCameraMap = UARBlueprintLibrary::GetARTexture(EARTextureType::CameraImage);
+		// pDepthMap = UARBlueprintLibrary::GetARTexture(EARTextureType::SceneDepthMap);
+		// if(!pDepthMap)
+		// 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("DepthMap is bad..."));
+		// pCameraMap = UARBlueprintLibrary::GetARTexture(EARTextureType::CameraImage);
 		break;
 
 	case EARSessionStatus::FatalError:

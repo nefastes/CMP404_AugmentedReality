@@ -8,6 +8,12 @@
 
 class UCameraComponent;
 class APlaceableActor;
+enum class InputState_
+{
+	InputState_Undefined = 0,
+	InputState_DragHoop,
+	InputState_ShootBalls
+};
 
 UCLASS()
 class UE5_AR_API ACustomARPawn : public APawn
@@ -26,18 +32,27 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	FVector DeprojectToWorld(FVector2D screenTouch);
 	bool WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult);
 
-	virtual void OnScreenPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	// The following functions determine the player inputs/behaviours
+	virtual void OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnHoopHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnHoopReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 
+	virtual void OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnShootHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// Called to change the kind of inputs the player does
+	void SetInputState(InputState_ state);
 
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
 		USceneComponent* SceneComponent;

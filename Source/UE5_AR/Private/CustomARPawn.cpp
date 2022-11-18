@@ -37,19 +37,6 @@ void ACustomARPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (pDraggedActor)
-	{
-		bool bIsScreenPressed;
-		const auto controller = UGameplayStatics::GetPlayerController(this, 0);
-		FVector2D newTouch;
-		controller->GetInputTouchState(ETouchIndex::Touch1, newTouch.X, newTouch.Y, bIsScreenPressed);
-		if (bIsScreenPressed)
-		{
-			const auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(newTouch, false, false, false, true);
-			if (TraceResult.IsValidIndex(0)) pDraggedActor->SetActorTransform((TraceResult[0].GetLocalToWorldTransform()));
-		}
-	}
-
 	// loop through all tracked images and see if van gogh was found
 	TArray<UARTrackedImage*> images = UARBlueprintLibrary::GetAllGeometriesByClass<UARTrackedImage>();
 	for(int32_t i = 0; i < images.Num(); ++i)
@@ -102,19 +89,45 @@ void ACustomARPawn::Tick(float DeltaTime)
 void ACustomARPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	//Bind various player inputs to functions
-	// There are a few types - BindTouch, BindAxis, and BindEvent.  
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnScreenPressed);
-	PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnScreenReleased);
+	
+	// Initialise the pawn on the Hoop placement behaviours
+#ifdef _WIN64
+	SetInputState(InputState_::InputState_ShootBalls);
+#else
+	SetInputState(InputState_::InputState_DragHoop);
+#endif
 }
 
-FVector ACustomARPawn::DeprojectToWorld(FVector2D ScreenTouch)
+void ACustomARPawn::SetInputState(InputState_ state)
 {
-	FVector worldPosition, worldDirection;
-	auto controller = UGameplayStatics::GetPlayerController(this, 0);
-	UGameplayStatics::DeprojectScreenToWorld(controller, ScreenTouch, worldPosition, worldDirection);
-	return worldPosition;
+	UInputComponent* PlayerInputComponent = GetOwner()->InputComponent;
+	if(!PlayerInputComponent)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at Pawn::SetInputState: PlayerInputComponent was NULL."));
+		return;
+	}
+
+	// Unbind all previous touches
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Changing binds"));
+	PlayerInputComponent->TouchBindings.Empty();
+	
+	// Bind the touches to the new behaviours
+	switch (state)
+	{
+	case InputState_::InputState_DragHoop:
+		PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnHoopPressed);
+		PlayerInputComponent->BindTouch(IE_Repeat, this, &ACustomARPawn::OnHoopHold);
+		PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnHoopReleased);
+		break;
+	case InputState_::InputState_ShootBalls:
+		PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnShootPressed);
+		PlayerInputComponent->BindTouch(IE_Repeat, this, &ACustomARPawn::OnShootHold);
+		PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnShootReleased);
+		break;
+	default:
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at Pawn::SetInputState: trying to set inputs to undefined."));
+		break;
+	}
 }
 
 bool ACustomARPawn::WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult)
@@ -133,27 +146,29 @@ bool ACustomARPawn::WorldHitTest(const FVector& InTouchPosition, FHitResult& Out
 	return success;
 }
 
-void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+void ACustomARPawn::OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	auto Temp = GetWorld()->GetAuthGameMode();
 	auto GameMode = Cast<ACustomGameMode>(Temp);
 	auto GameManager = GameMode->GetGameManager();
 	auto ARManager = GameMode->GetARManager();
-	
 
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("ScreenTouch Reached"));
-
-	FHitResult hitResult;
-	if (!WorldHitTest(ScreenPos, hitResult) && GameManager)
+	if (!GameManager || !ARManager)
 	{
-		GameManager->LineTraceSpawnActor(ScreenPos);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnHoopPressed: One of the managers was NULL"));
+		return;
 	}
+
+	// Actor placement logic
+	// Test if an actor was hit. If so, this actor must be dragged. Else, spawn the actor on the new location
+	FHitResult hitResult;
+	if (!WorldHitTest(ScreenPos, hitResult))
+		GameManager->LineTraceSpawnActor(ScreenPos);
 	else
 	{
 		UClass* hitActorClass = UGameplayStatics::GetObjectClass(hitResult.GetActor());
 		if (UKismetMathLibrary::ClassIsChildOf(hitActorClass, APlaceableActor::StaticClass()))
 		{
-			UKismetSystemLibrary::PrintString(this, FString(TEXT("\t\tActor pressed.")), true, true, FLinearColor::Red, 5);
 			pDraggedActor = Cast<APlaceableActor>(hitResult.GetActor());
 			UARBlueprintLibrary::RemovePin((pDraggedActor->PinComponent));
 			pDraggedActor->PinComponent = nullptr;
@@ -164,7 +179,17 @@ void ACustomARPawn::OnScreenPressed(const ETouchIndex::Type FingerIndex, const F
 	}
 }
 
-void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+void ACustomARPawn::OnHoopHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+{
+	// If an actor is waiting to be dragged, drag it to the new touch
+	if (pDraggedActor)
+	{
+		const auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(FVector2d(ScreenPos), false, false, false, true);
+		if (TraceResult.IsValidIndex(0)) pDraggedActor->SetActorTransform((TraceResult[0].GetLocalToWorldTransform()));
+	}
+}
+
+void ACustomARPawn::OnHoopReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	if (pDraggedActor)
 	{
@@ -173,13 +198,42 @@ void ACustomARPawn::OnScreenReleased(const ETouchIndex::Type FingerIndex, const 
 		auto GameManager = GameMode->GetGameManager();
 		auto ARManager = GameMode->GetARManager();
 		
-		if (GameManager)
-		{
-			GameManager->LineTraceSpawnActor(ScreenPos);
-		}
 		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
+		
+		if (!GameManager || !ARManager)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnHoopReleased: One of the managers was NULL"));
+			return;
+		}
+		GameManager->LineTraceSpawnActor(ScreenPos);
 		ARManager->AllowPlaneUpdate(true);
 		ARManager->SetPlanesActive(true);
 	}
+}
+
+void ACustomARPawn::OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+{
+}
+
+void ACustomARPawn::OnShootHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+{
+}
+
+void ACustomARPawn::OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+{
+	// Shoot a ball on touch released
+
+	auto Temp = GetWorld()->GetAuthGameMode();
+	auto GameMode = Cast<ACustomGameMode>(Temp);
+	auto GameManager = GameMode->GetGameManager();
+
+	if(!GameManager)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnShootReleased: Game manager was NULL"));
+		return;
+	}
+	
+	// Spawn a ball at that location
+	GameManager->SpawnBasketball(FVector2d(ScreenPos));
 }

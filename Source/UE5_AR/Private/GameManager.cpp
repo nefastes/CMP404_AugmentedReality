@@ -5,6 +5,7 @@
 
 #include "ARBlueprintLibrary.h"
 #include "ARPin.h"
+#include "CustomARPawn.h"
 #include "CustomGameMode.h"
 #include "HelloARManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -149,10 +150,41 @@ bool AGameManager::AcceptHoopAndStartGame()
 		ARManager->SetPlanesActive(false);
 
 		// Disable hoop placement
-		
+		APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+		ACustomARPawn* pawn = Cast<ACustomARPawn>(controller->GetPawn());
+		if(!pawn)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error on start game: pawn cast faile"));
+			return false;
+		}
+		pawn->SetInputState(InputState_::InputState_ShootBalls);
 		
 		return true;
 	}
 	return false;
+}
+
+void AGameManager::SpawnBasketball(FVector2D ScreenPos)
+{
+	// Start by retrieving the spawn location and direction
+	FVector worldPosition, worldDirection;
+	if(!UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), ScreenPos, worldPosition, worldDirection))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnShootReleased: Deprojection failed."));
+		return;
+	}
+
+	FActorSpawnParameters params;
+	const FRotator rotation(0, 0, 0);
+	AShootableActor* ball = GetWorld()->SpawnActor<AShootableActor>(ShootableToSpawn, worldPosition, rotation, params);
+	const float impulseForce = 1000.f;
+	ball->StaticMeshComponent->AddImpulse(worldDirection * impulseForce);
+	aBasketballs.Add(ball);
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("New ball spawned"));
+}
+
+void AGameManager::RemoveBall(AShootableActor* ball)
+{
+	aBasketballs.Remove(ball);
 }
 
