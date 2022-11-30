@@ -13,6 +13,8 @@ class UE5_AR_API APlaceableActor : public AActor
 {
 	GENERATED_BODY()
 	bool bSelected;
+	UMaterial* pMaterial;
+	UMaterialInstanceDynamic* pDynamicMaterial;
 	
 public:	
 	// Sets default values for this actor's properties

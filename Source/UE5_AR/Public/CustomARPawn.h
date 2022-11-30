@@ -4,6 +4,7 @@
 
 #include "CustomActor.h"
 #include "GameFramework/Pawn.h"
+#include "UICircle.h"
 #include "CustomARPawn.generated.h"
 
 class UCameraComponent;
@@ -22,7 +23,8 @@ class UE5_AR_API ACustomARPawn : public APawn
 
 private:
 	APlaceableActor* pDraggedActor;
-	ACustomActor* pGoghActor, *pEarthActor;
+	float ScreenTouchHoldTime;
+	AUICircle* pUICircle;
 
 public:
 	// Sets default values for this pawn's properties
@@ -60,8 +62,6 @@ public:
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
 		UCameraComponent* CameraComponent;
 
-	UPROPERTY(Category="Placeable",EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ACustomActor> EarthActor;
-	UPROPERTY(Category="Placeable",EditAnywhere,BlueprintReadWrite)
-	TSubclassOf<ACustomActor> GoghActor;
+	UPROPERTY(Category="Actors",EditAnywhere,BlueprintReadWrite)
+	TSubclassOf<AUICircle> UICircleToSpawn;
 };

@@ -15,7 +15,7 @@
 
 
 // Sets default values
-ACustomARPawn::ACustomARPawn() : pDraggedActor(nullptr), pGoghActor(nullptr), pEarthActor(nullptr)
+ACustomARPawn::ACustomARPawn() : pDraggedActor(nullptr), ScreenTouchHoldTime(0.f), pUICircle(nullptr)
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -29,6 +29,10 @@ ACustomARPawn::ACustomARPawn() : pDraggedActor(nullptr), pGoghActor(nullptr), pE
 // Called when the game starts or when spawned
 void ACustomARPawn::BeginPlay()
 {
+	// Spawn the UI Circle and hide it
+	pUICircle = GetWorld()->SpawnActor<AUICircle>(UICircleToSpawn, FVector(0,0,0), FRotator(0,0,0));
+	pUICircle->SetActorHiddenInGame(true);
+	
 	Super::BeginPlay();
 }
 
@@ -37,51 +41,28 @@ void ACustomARPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// loop through all tracked images and see if van gogh was found
-	TArray<UARTrackedImage*> images = UARBlueprintLibrary::GetAllGeometriesByClass<UARTrackedImage>();
-	for(int32_t i = 0; i < images.Num(); ++i)
+	// Keep track of how much time a touch was held on the screen
+	// This must be done here as the input function IE_Repeat only triggers on drag
+	APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+	FVector2d touchPos;
+	bool screenPressed;
+	controller->GetInputTouchState(ETouchIndex::Touch1, touchPos.X, touchPos.Y, screenPressed);
+	if(screenPressed)
 	{
-		const UARCandidateImage* trackedImage = images[i]->GetDetectedImage();
-		if(trackedImage)
-		{
-			if(trackedImage->GetFriendlyName().Equals(TEXT("Vgogh")))
-			{
-				// Store all the information to spawn a cube on this image
-				if(!pGoghActor)
-				{
-					FActorSpawnParameters spawnParams;
-					auto transform = images[i]->GetLocalToTrackingTransform();
-					transform.SetScale3D(FVector(.1, .1, .1));
-					pGoghActor = GetWorld()->SpawnActor<ACustomActor>(GoghActor, transform.GetLocation(), FRotator(transform.GetRotation()), spawnParams);
-					// auto cubeSpawnTransform = images[i]->GetLocalToWorldTransform();
-					// pGoghActor = GetWorld()->SpawnActor<APlaceableActor>(cubeSpawnTransform.GetLocation(), FRotator(cubeSpawnTransform.GetRotation()), spawnParams);
-					pGoghActor->SetActorScale3D(transform.GetScale3D());
-				}
-				else
-				{
-					auto transform = images[i]->GetLocalToTrackingTransform();
-					pGoghActor->StartLocation = transform.GetLocation();
-				}
-			}
-			else if(trackedImage->GetFriendlyName().Equals(TEXT("Earth")))
-			{
-				// Store all the information to spawn a cube on this image
-				if(!pEarthActor)
-				{
-					FActorSpawnParameters spawnParams;
-					auto transform = images[i]->GetLocalToTrackingTransform();
-					transform.SetScale3D(FVector(.1, .1, .1));
-					pEarthActor = GetWorld()->SpawnActor<ACustomActor>(EarthActor, transform.GetLocation(), FRotator(transform.GetRotation()), spawnParams);
-					pEarthActor->SetActorScale3D(transform.GetScale3D());
-					GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Spawned earth actor at " + pEarthActor->GetActorLocation().ToString()));
-				}
-				else
-				{
-					auto transform = images[i]->GetLocalToTrackingTransform();
-					pEarthActor->StartLocation = transform.GetLocation();
-				}
-			}	
-		}
+		// Move the circle in from of the camera
+		FVector worldPosition, worldDirection;
+		UGameplayStatics::DeprojectScreenToWorld(controller, touchPos, worldPosition, worldDirection);
+		pUICircle->SetActorLocation(worldPosition + worldDirection);
+		pUICircle->SetActorRotation(FVector(worldDirection.X, worldDirection.Y, 0).Rotation());
+		pUICircle->SetActorScale3D(FMath::Lerp(FVector(0,0,0), FVector(1,1,1), FMath::Clamp(ScreenTouchHoldTime, 0.f, 1.f)));
+		
+		// Update the hold time
+		ScreenTouchHoldTime += DeltaTime;
+	}
+	else
+	{
+		pUICircle->SetActorHiddenInGame(true);
+		ScreenTouchHoldTime = 0.f;
 	}
 }
 
@@ -91,6 +72,7 @@ void ACustomARPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	
 	// Initialise the pawn on the Hoop placement behaviours
+	// For editor debugging purposes, init on the ball shooting gameplay
 #ifdef _WIN64
 	SetInputState(InputState_::InputState_ShootBalls);
 #else
@@ -214,16 +196,19 @@ void ACustomARPawn::OnHoopReleased(const ETouchIndex::Type FingerIndex, const FV
 
 void ACustomARPawn::OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
+	// Reveal actor if hidden
+	if(pUICircle->IsHidden()) pUICircle->SetActorHiddenInGame(false);
 }
 
 void ACustomARPawn::OnShootHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
+	// Note to self: this function only triggers when the touch is dragged on the screen
+	// For a 'hold' behaviour you need to use Update()
 }
 
 void ACustomARPawn::OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	// Shoot a ball on touch released
-
 	auto Temp = GetWorld()->GetAuthGameMode();
 	auto GameMode = Cast<ACustomGameMode>(Temp);
 	auto GameManager = GameMode->GetGameManager();
@@ -235,5 +220,5 @@ void ACustomARPawn::OnShootReleased(const ETouchIndex::Type FingerIndex, const F
 	}
 	
 	// Spawn a ball at that location
-	GameManager->SpawnBasketball(FVector2d(ScreenPos));
+	GameManager->SpawnBasketball(FVector2d(ScreenPos), ScreenTouchHoldTime);
 }

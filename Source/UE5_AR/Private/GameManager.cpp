@@ -3,6 +3,8 @@
 
 #include "GameManager.h"
 
+#include <string>
+
 #include "ARBlueprintLibrary.h"
 #include "ARPin.h"
 #include "CustomARPawn.h"
@@ -15,19 +17,11 @@ AGameManager::AGameManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Load materials
-	static ConstructorHelpers::FObjectFinder<UMaterial> HoopMaterialAsset(TEXT("Material'/Game/Assets/Materials/Colour.Colour'"));
-	pHoopMaterial = HoopMaterialAsset.Object;
-
 }
 
 // Called when the game starts or when spawned
 void AGameManager::BeginPlay()
 {
-	// Assign dynamic materials
-	pHoopDynamicMaterial = UMaterialInstanceDynamic::Create(pHoopMaterial, this);
-
 	// This function will transcend to call BeginPlay on all the actors within this structure
 	Super::BeginPlay();
 
@@ -38,27 +32,7 @@ void AGameManager::BeginPlay()
 void AGameManager::Tick(float DeltaTime)
 {
 	// Update the Game Manager
-
-	// Change the color of the hoop based on the camera's proximity
-	if (pHoop)
-	{
-		if (!pHoop->IsSelected())
-		{
-			// Change the colour of the actor based on the player distance
-			auto controller = UGameplayStatics::GetPlayerController(this, 0);
-			FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
-			FVector actorPos = pHoop->GetActorLocation();
-			FVector diff = actorPos - cameraPos;
-			if (diff.GetAbs().Length() < 100.0)
-				pHoopDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
-			else
-				pHoopDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
-		}
-		else
-		{
-			pHoopDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 1.f, 0.f));
-		}
-	}
+	
 
 	// Proceed to update all the components within this structure
 	Super::Tick(DeltaTime);
@@ -107,9 +81,6 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
 					pHoop = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
-
-					// Init dynamic materials
-					pHoop->StaticMeshComponent->SetMaterial(0, pHoopDynamicMaterial);
 				}
 
 				// Set the spawned actor location based on the Pin. Have a look at the code for Placeable Object to see how it handles the AR PIN passed on
@@ -127,8 +98,6 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
 					pHoop = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
-					// Init dynamic materials
-					pHoop->StaticMeshComponent->SetMaterial(0, pHoopDynamicMaterial);
 				}
 				pHoop->SetActorTransform(TrackedTF);
 				pHoop->SetActorScale3D(FVector(0.2, 0.2, 0.2));
@@ -164,7 +133,7 @@ bool AGameManager::AcceptHoopAndStartGame()
 	return false;
 }
 
-void AGameManager::SpawnBasketball(FVector2D ScreenPos)
+void AGameManager::SpawnBasketball(FVector2D ScreenPos, float HoldTime)
 {
 	// Start by retrieving the spawn location and direction
 	FVector worldPosition, worldDirection;
@@ -174,13 +143,20 @@ void AGameManager::SpawnBasketball(FVector2D ScreenPos)
 		return;
 	}
 
-	FActorSpawnParameters params;
+	// Spawn the Actor
 	const FRotator rotation(0, 0, 0);
-	AShootableActor* ball = GetWorld()->SpawnActor<AShootableActor>(ShootableToSpawn, worldPosition, rotation, params);
-	const float impulseForce = 1000.f;
+	AShootableActor* ball = GetWorld()->SpawnActor<AShootableActor>(ShootableToSpawn, worldPosition, rotation);
+
+	// Apply an impulse, based on input time
+	constexpr float minImpulse = 100.f;	// Evaluated at compile time
+	constexpr float maxImpulse = 2000.f;
+	const float inputTime = FMath::Clamp(HoldTime, 0.f, 1.f);
+	const float impulseForce = FMath::Lerp(minImpulse, maxImpulse, inputTime);
 	ball->StaticMeshComponent->AddImpulse(worldDirection * impulseForce);
+
+	// Store the ball
 	aBasketballs.Add(ball);
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("New ball spawned"));
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString(TEXT("New ball spawned with impulse: ") + FString::SanitizeFloat(impulseForce)));
 }
 
 void AGameManager::RemoveBall(AShootableActor* ball)

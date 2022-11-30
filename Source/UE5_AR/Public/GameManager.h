@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "PlaceableActor.h"
 #include "ShootableActor.h"
+#include "UICircle.h"
 #include "GameFramework/Actor.h"
-#include "VectorField/VectorField.h"
 #include "GameManager.generated.h"
 
 UCLASS()
@@ -14,8 +14,6 @@ class UE5_AR_API AGameManager : public AActor
 {
 	GENERATED_BODY()
 	APlaceableActor* pHoop;
-	UMaterial* pHoopMaterial;
-	UMaterialInstanceDynamic* pHoopDynamicMaterial;
 	TArray<AShootableActor*> aBasketballs;
 	
 public:	
@@ -46,6 +44,6 @@ public:
 	bool AcceptHoopAndStartGame();
 
 	// Functions to spawn a basketball from the touch position on the screen
-	void SpawnBasketball(FVector2D ScreenPos);
+	void SpawnBasketball(FVector2D ScreenPos, float HoldTime);
 	void RemoveBall(AShootableActor* ball);
 };

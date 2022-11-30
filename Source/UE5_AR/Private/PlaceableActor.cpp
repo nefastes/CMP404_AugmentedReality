@@ -4,6 +4,7 @@
 #include "PlaceableActor.h"
 #include "ARPin.h"
 #include "ARBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APlaceableActor::APlaceableActor() : 
@@ -18,17 +19,22 @@ APlaceableActor::APlaceableActor() :
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetupAttachment(SceneComponent);
 
-	auto MeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	auto MeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/Assets/Meshes/hoop/hoop.hoop'"));
 	StaticMeshComponent->SetStaticMesh(MeshAsset.Object);
-	
 
+	// Load materials
+	static ConstructorHelpers::FObjectFinder<UMaterial> HoopMaterialAsset(TEXT("Material'/Game/Assets/Materials/Colour.Colour'"));
+	pMaterial = HoopMaterialAsset.Object;
 }
 
 // Called when the game starts or when spawned
 void APlaceableActor::BeginPlay()
 {
-	Super::BeginPlay();
+	// Assign dynamic materials
+	pDynamicMaterial = UMaterialInstanceDynamic::Create(pMaterial, this);
+	StaticMeshComponent->SetMaterial(0, pDynamicMaterial);
 	
+	Super::BeginPlay();
 }
 
 // Called every frame
@@ -50,12 +56,24 @@ void APlaceableActor::Tick(float DeltaTime)
 
 		case EARTrackingState::NotTracking:
 			PinComponent = nullptr;
-
 			break;
-
 		}
 	}
-	
+
+	// Change the color of the hoop based on the camera's proximity
+	if (!bSelected)
+	{
+		// Change the colour of the actor based on the player distance
+		auto controller = UGameplayStatics::GetPlayerController(this, 0);
+		FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
+		FVector actorPos = GetActorLocation();
+		FVector diff = actorPos - cameraPos;
+		if (diff.GetAbs().Length() < 100.0)
+			pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
+		else
+			pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
+	}
+	else pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 1.f, 0.f));
 
 }
 
