@@ -9,11 +9,12 @@
 #include "ARPin.h"
 #include "CustomARPawn.h"
 #include "CustomGameMode.h"
+#include "CustomGameState.h"
 #include "HelloARManager.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
-AGameManager::AGameManager()
+AGameManager::AGameManager() : bValidCollision(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -162,5 +163,30 @@ void AGameManager::SpawnBasketball(FVector2D ScreenPos, float HoldTime)
 void AGameManager::RemoveBall(AShootableActor* ball)
 {
 	aBasketballs.Remove(ball);
+}
+
+void AGameManager::OnTriggerCollisionEnter(UPrimitiveComponent* trigger, UPrimitiveComponent* ball)
+{
+	const FVector& triggerPos = trigger->GetComponentLocation();
+	const FVector& ballPos = ball->GetComponentLocation();
+
+	// Z is up
+	// The valid scenario is for the ball to enter from above the trigger
+	bValidCollision = triggerPos.Z < ballPos.Z;
+}
+
+void AGameManager::OnTriggerCollisionExit(UPrimitiveComponent* trigger, UPrimitiveComponent* ball)
+{
+	const FVector& triggerPos = trigger->GetComponentLocation();
+	const FVector& ballPos = ball->GetComponentLocation();
+
+	// Z is up
+	// The valid scenario is for the ball to exit from below
+	// The & is checking if the entering collision was valid as well
+	bValidCollision &= triggerPos.Z > ballPos.Z;
+
+	// If the exit was valid, the ball went through the hoop and so the score should count
+	if(bValidCollision)
+		Cast<ACustomGameState>(GetWorld()->GetGameState())->UpdateScore();
 }
 

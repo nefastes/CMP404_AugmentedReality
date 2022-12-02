@@ -15,6 +15,7 @@ class UE5_AR_API AGameManager : public AActor
 	GENERATED_BODY()
 	APlaceableActor* pHoop;
 	TArray<AShootableActor*> aBasketballs;
+	bool bValidCollision;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -40,10 +41,17 @@ public:
 	TSubclassOf<AShootableActor> ShootableToSpawn;
 
 	// Call this function when the user presses the button to accept the hoop placement
-	UFUNCTION(BlueprintCallable, Category="StartGame")
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
 	bool AcceptHoopAndStartGame();
 
 	// Functions to spawn a basketball from the touch position on the screen
 	void SpawnBasketball(FVector2D ScreenPos, float HoldTime);
 	void RemoveBall(AShootableActor* ball);
+
+	// Scoring logic functions
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
+	void OnTriggerCollisionEnter(UPrimitiveComponent* trigger, UPrimitiveComponent* ball);	// Returns true if the ball collides from above the trigger, false otherwise
+
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
+	void OnTriggerCollisionExit(UPrimitiveComponent* trigger, UPrimitiveComponent* ball); // Returns true if the ball exits from the bottom, false otherwise
 };

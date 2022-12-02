@@ -9,3 +9,11 @@ ACustomGameState::ACustomGameState() :
 {
 
 }
+
+void ACustomGameState::UpdateScore()
+{
+	// This function gets called when a ball interacts with the trigger in the hoop
+	// For now, just add 50.
+	Score += 50;
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Added 50 points!"));
+}

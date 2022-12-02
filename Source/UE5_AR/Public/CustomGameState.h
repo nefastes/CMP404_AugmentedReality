@@ -20,4 +20,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Score;
 
+	UFUNCTION(BlueprintCallable, Category="UpdateScore")
+	void UpdateScore();
 };

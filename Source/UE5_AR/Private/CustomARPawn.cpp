@@ -53,7 +53,7 @@ void ACustomARPawn::Tick(float DeltaTime)
 		FVector worldPosition, worldDirection;
 		UGameplayStatics::DeprojectScreenToWorld(controller, touchPos, worldPosition, worldDirection);
 		pUICircle->SetActorLocation(worldPosition + worldDirection);
-		pUICircle->SetActorRotation(FVector(worldDirection.X, worldDirection.Y, 0).Rotation());
+		pUICircle->SetActorRotation(worldDirection.Rotation());
 		pUICircle->SetActorScale3D(FMath::Lerp(FVector(0,0,0), FVector(1,1,1), FMath::Clamp(ScreenTouchHoldTime, 0.f, 1.f)));
 		
 		// Update the hold time
