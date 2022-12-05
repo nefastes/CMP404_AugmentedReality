@@ -2,9 +2,6 @@
 
 
 #include "GameManager.h"
-
-#include <string>
-
 #include "ARBlueprintLibrary.h"
 #include "ARPin.h"
 #include "CustomARPawn.h"
@@ -14,7 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
-AGameManager::AGameManager() : bValidCollision(false)
+AGameManager::AGameManager() : bValidCollision(false), GameTimeLeft(-1.f), bGamePaused(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -33,15 +30,15 @@ void AGameManager::BeginPlay()
 void AGameManager::Tick(float DeltaTime)
 {
 	// Update the Game Manager
-	
+	const bool gameStarted = GameTimeLeft > 0.f;
+	if(gameStarted && !bGamePaused)
+	{
+		// Update gameplay objects and variables
+		GameTimeLeft = 60.f - GetWorldTimerManager().GetTimerElapsed(Timer);
+	}
 
 	// Proceed to update all the components within this structure
 	Super::Tick(DeltaTime);
-}
-
-void AGameManager::LineTraceSpawnActor(FVector ScreenPos)
-{
-	LineTraceSpawnActor(FVector2D(ScreenPos));
 }
 
 void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
@@ -78,10 +75,9 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 				//Spawn a new Actor at the location if not done yet
 				if (!pHoop)
 				{
-					const FActorSpawnParameters SpawnInfo;
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
-					pHoop = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
+					pHoop = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot);
 				}
 
 				// Set the spawned actor location based on the Pin. Have a look at the code for Placeable Object to see how it handles the AR PIN passed on
@@ -95,15 +91,64 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 				//Spawn a new Actor at the location if not done yet
 				if (!pHoop)
 				{
-					const FActorSpawnParameters SpawnInfo;
 					const FRotator MyRot(0, 0, 0);
 					const FVector MyLoc(0, 0, 0);
-					pHoop = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot, SpawnInfo);
+					pHoop = GetWorld()->SpawnActor<APlaceableActor>(PlacableToSpawn, MyLoc, MyRot);
 				}
 				pHoop->SetActorTransform(TrackedTF);
-				pHoop->SetActorScale3D(FVector(0.2, 0.2, 0.2));
 			}
 		}
+	}
+}
+
+void AGameManager::ResetGame()
+{
+	const auto Temp = GetWorld()->GetAuthGameMode();
+	const auto GameMode = Cast<ACustomGameMode>(Temp);
+	const auto ARManager = GameMode->GetARManager();
+
+	// Re-allow to capture new planes from the camera
+	ARManager->AllowPlaneUpdate(true);
+	ARManager->SetPlanesActive(true);
+
+	// Enable hoop placement
+	const APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+	ACustomARPawn* pawn = Cast<ACustomARPawn>(controller->GetPawn());
+	if(!pawn)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::ResetGame: pawn cast failed"));
+		return;
+	}
+	pawn->SetInputState(InputState_::InputState_DragHoop);
+
+	// Reset the score
+	Cast<ACustomGameState>(GetWorld()->GetGameState())->Score = 0;
+
+	// Reset the member variables
+	GameTimeLeft = -1.f;
+	bGamePaused = false;
+	GetWorldTimerManager().ClearTimer(Timer);
+
+	// Kill All basketballs
+	for(AShootableActor* item : aBasketballs)
+		item->Destroy();
+	aBasketballs.Empty();
+}
+
+void AGameManager::TogglePause()
+{
+	bGamePaused = !bGamePaused;
+	ACustomARPawn* pawn = Cast<ACustomARPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
+
+	if(bGamePaused)
+	{
+		GetWorldTimerManager().PauseTimer(Timer);
+		pawn->SetInputState(InputState_None);
+	}
+	else
+	{
+		GetWorldTimerManager().UnPauseTimer(Timer);
+		pawn->SetInputState(InputState_ShootBalls);
 	}
 }
 
@@ -111,23 +156,27 @@ bool AGameManager::AcceptHoopAndStartGame()
 {
 	if(pHoop)
 	{
-		auto Temp = GetWorld()->GetAuthGameMode();
-		auto GameMode = Cast<ACustomGameMode>(Temp);
-		auto ARManager = GameMode->GetARManager();
+		const auto Temp = GetWorld()->GetAuthGameMode();
+		const auto GameMode = Cast<ACustomGameMode>(Temp);
+		const auto ARManager = GameMode->GetARManager();
 		
 		// Disable the tracking of the environment
 		ARManager->AllowPlaneUpdate(false);
 		ARManager->SetPlanesActive(false);
 
 		// Disable hoop placement
-		APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+		const APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
 		ACustomARPawn* pawn = Cast<ACustomARPawn>(controller->GetPawn());
 		if(!pawn)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error on start game: pawn cast faile"));
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::AcceptHoopAndStartGame: pawn cast failed"));
 			return false;
 		}
 		pawn->SetInputState(InputState_::InputState_ShootBalls);
+
+		// Assign the time limit in seconds
+		GameTimeLeft = 60.f;
+		GetWorldTimerManager().SetTimer(Timer, this, &AGameManager::EndGame, 60.f, false);
 		
 		return true;
 	}
@@ -150,7 +199,7 @@ void AGameManager::SpawnBasketball(FVector2D ScreenPos, float HoldTime)
 
 	// Apply an impulse, based on input time
 	constexpr float minImpulse = 100.f;	// Evaluated at compile time
-	constexpr float maxImpulse = 2000.f;
+	constexpr float maxImpulse = 1500.f;
 	const float inputTime = FMath::Clamp(HoldTime, 0.f, 1.f);
 	const float impulseForce = FMath::Lerp(minImpulse, maxImpulse, inputTime);
 	ball->StaticMeshComponent->AddImpulse(worldDirection * impulseForce);
@@ -187,6 +236,39 @@ void AGameManager::OnTriggerCollisionExit(UPrimitiveComponent* trigger, UPrimiti
 
 	// If the exit was valid, the ball went through the hoop and so the score should count
 	if(bValidCollision)
-		Cast<ACustomGameState>(GetWorld()->GetGameState())->UpdateScore();
+	{
+		const auto controller = UGameplayStatics::GetPlayerController(this, 0);
+		const FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
+		const float shotDistance = (triggerPos - cameraPos).Length() / 100.f;				// In meters
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("Shot Distance: %f"), shotDistance));
+		Cast<ACustomGameState>(GetWorld()->GetGameState())->UpdateScore(shotDistance);
+	}
+}
+
+FString AGameManager::GetTimeString() const
+{
+	// This function is really bad but it will have to do
+	const int32 minutes = GameTimeLeft / 60.f;
+	const int32 seconds = fmodf(GameTimeLeft, 60.f);
+	const int32 milliseconds = fmodf(GameTimeLeft * 1000.f, 1000.f);
+
+	const FString m = FString::FromInt(minutes);
+	FString s = FString::FromInt(seconds);
+	if(s.Len() < 2) s.InsertAt(0, TEXT('0'));
+	FString mm = FString::FromInt(milliseconds);
+	if(mm.Len() < 2) mm.InsertAt(0, FString(TEXT("00")));
+	else if(mm.Len() < 3) mm.InsertAt(0, TEXT('0'));
+
+	FString time(TEXT("::"));
+	time.Append(mm);
+	time.InsertAt(1, s);
+	time.InsertAt(0, m);
+
+	return time;
+}
+
+void AGameManager::EndGame()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Game Reached!"));
 }
 

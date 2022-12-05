@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "PlaceableActor.h"
 #include "ShootableActor.h"
-#include "UICircle.h"
 #include "GameFramework/Actor.h"
 #include "GameManager.generated.h"
 
@@ -16,6 +15,9 @@ class UE5_AR_API AGameManager : public AActor
 	APlaceableActor* pHoop;
 	TArray<AShootableActor*> aBasketballs;
 	bool bValidCollision;
+	float GameTimeLeft;
+	bool bGamePaused;
+	FTimerHandle Timer;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -30,8 +32,12 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Functions to spawn a placeable actor given a screen location
-	void LineTraceSpawnActor(FVector ScreenPos);
 	void LineTraceSpawnActor(FVector2D ScreenPos);
+
+	// Global logic funcions
+	void ResetGame();
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
+	void TogglePause();
 
 	// The actor to be spawned by the above functions, this should be setup as the hoop prefab in the blueprint
 	UPROPERTY(Category="Actors",EditAnywhere,BlueprintReadWrite)
@@ -54,4 +60,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="UFunctions")
 	void OnTriggerCollisionExit(UPrimitiveComponent* trigger, UPrimitiveComponent* ball); // Returns true if the ball exits from the bottom, false otherwise
+
+	// Game logic functions
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
+	FString GetTimeString() const;
+	UFUNCTION()
+	void EndGame();
 };

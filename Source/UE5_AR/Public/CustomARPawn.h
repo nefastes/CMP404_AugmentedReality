@@ -9,9 +9,11 @@
 
 class UCameraComponent;
 class APlaceableActor;
-enum class InputState_
+
+UENUM()
+enum InputState_
 {
-	InputState_Undefined = 0,
+	InputState_None = 0,
 	InputState_DragHoop,
 	InputState_ShootBalls
 };
@@ -38,11 +40,11 @@ protected:
 
 	// The following functions determine the player inputs/behaviours
 	virtual void OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnHoopHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnHoopDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 	virtual void OnHoopReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 
 	virtual void OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnShootHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	virtual void OnShootDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 	virtual void OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 	
 	
@@ -54,6 +56,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// Called to change the kind of inputs the player does
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
 	void SetInputState(InputState_ state);
 
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)

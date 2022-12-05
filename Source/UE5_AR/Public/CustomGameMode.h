@@ -61,4 +61,8 @@ public:
 
 	UPROPERTY(Category="Game Manager To Spawn",EditAnywhere,BlueprintReadWrite)
 	TSubclassOf<AGameManager> GameManagerToSpawn;
+
+
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
+	void ResetMode();
 };

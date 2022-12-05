@@ -59,11 +59,6 @@ void ACustomARPawn::Tick(float DeltaTime)
 		// Update the hold time
 		ScreenTouchHoldTime += DeltaTime;
 	}
-	else
-	{
-		pUICircle->SetActorHiddenInGame(true);
-		ScreenTouchHoldTime = 0.f;
-	}
 }
 
 // Called to bind functionality to input
@@ -92,22 +87,24 @@ void ACustomARPawn::SetInputState(InputState_ state)
 	// Unbind all previous touches
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Changing binds"));
 	PlayerInputComponent->TouchBindings.Empty();
+
+	// Reset the hold time tracker for the new inputs
+	ScreenTouchHoldTime = 0.f;
 	
 	// Bind the touches to the new behaviours
 	switch (state)
 	{
 	case InputState_::InputState_DragHoop:
 		PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnHoopPressed);
-		PlayerInputComponent->BindTouch(IE_Repeat, this, &ACustomARPawn::OnHoopHold);
+		PlayerInputComponent->BindTouch(IE_Repeat, this, &ACustomARPawn::OnHoopDrag);
 		PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnHoopReleased);
 		break;
 	case InputState_::InputState_ShootBalls:
 		PlayerInputComponent->BindTouch(IE_Pressed, this, &ACustomARPawn::OnShootPressed);
-		PlayerInputComponent->BindTouch(IE_Repeat, this, &ACustomARPawn::OnShootHold);
+		PlayerInputComponent->BindTouch(IE_Repeat, this, &ACustomARPawn::OnShootDrag);
 		PlayerInputComponent->BindTouch(IE_Released, this, &ACustomARPawn::OnShootReleased);
 		break;
 	default:
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at Pawn::SetInputState: trying to set inputs to undefined."));
 		break;
 	}
 }
@@ -145,7 +142,7 @@ void ACustomARPawn::OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVe
 	// Test if an actor was hit. If so, this actor must be dragged. Else, spawn the actor on the new location
 	FHitResult hitResult;
 	if (!WorldHitTest(ScreenPos, hitResult))
-		GameManager->LineTraceSpawnActor(ScreenPos);
+		GameManager->LineTraceSpawnActor(FVector2d(ScreenPos));
 	else
 	{
 		UClass* hitActorClass = UGameplayStatics::GetObjectClass(hitResult.GetActor());
@@ -161,7 +158,7 @@ void ACustomARPawn::OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVe
 	}
 }
 
-void ACustomARPawn::OnHoopHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+void ACustomARPawn::OnHoopDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	// If an actor is waiting to be dragged, drag it to the new touch
 	if (pDraggedActor)
@@ -188,7 +185,7 @@ void ACustomARPawn::OnHoopReleased(const ETouchIndex::Type FingerIndex, const FV
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnHoopReleased: One of the managers was NULL"));
 			return;
 		}
-		GameManager->LineTraceSpawnActor(ScreenPos);
+		GameManager->LineTraceSpawnActor(FVector2d(ScreenPos));
 		ARManager->AllowPlaneUpdate(true);
 		ARManager->SetPlanesActive(true);
 	}
@@ -196,11 +193,11 @@ void ACustomARPawn::OnHoopReleased(const ETouchIndex::Type FingerIndex, const FV
 
 void ACustomARPawn::OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
-	// Reveal actor if hidden
-	if(pUICircle->IsHidden()) pUICircle->SetActorHiddenInGame(false);
+	// Reveal UI Circle to indicate the impulse
+	pUICircle->SetActorHiddenInGame(false);
 }
 
-void ACustomARPawn::OnShootHold(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
+void ACustomARPawn::OnShootDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	// Note to self: this function only triggers when the touch is dragged on the screen
 	// For a 'hold' behaviour you need to use Update()
@@ -221,4 +218,8 @@ void ACustomARPawn::OnShootReleased(const ETouchIndex::Type FingerIndex, const F
 	
 	// Spawn a ball at that location
 	GameManager->SpawnBasketball(FVector2d(ScreenPos), ScreenTouchHoldTime);
+
+	// Hide UI
+	pUICircle->SetActorHiddenInGame(true);
+	ScreenTouchHoldTime = 0.f;
 }

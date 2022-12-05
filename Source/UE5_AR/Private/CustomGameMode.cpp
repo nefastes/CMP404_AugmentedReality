@@ -4,13 +4,10 @@
 #include "CustomGameMode.h"
 #include "CustomARPawn.h"
 #include "CustomGameState.h"
-#include "CustomActor.h"
 #include "HelloARManager.h"
 #include "GameManager.h"
-#include "ARPin.h"
 #include "ARBlueprintLibrary.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
-#include "PlaceableActor.h"
 
 ACustomGameMode::ACustomGameMode():
 	pARManager(nullptr),
@@ -65,4 +62,10 @@ void ACustomGameMode::SpawnInitialActors()
 	//pARManager = NewObject<AHelloARManager>();								// NO! Otherwise their StartPlay does not get called!
 	pARManager = GetWorld()->SpawnActor<AHelloARManager>();						// In charge of all the AR side functionalities
 	pGameManager = GetWorld()->SpawnActor<AGameManager>(GameManagerToSpawn);	// In charge of the game's logic
+}
+
+void ACustomGameMode::ResetMode()
+{
+	// Reset the game completely
+	pGameManager->ResetGame();
 }
