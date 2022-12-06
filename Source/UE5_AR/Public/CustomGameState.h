@@ -22,6 +22,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Score;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 HighScore;
+
 	UFUNCTION(BlueprintCallable, Category="UpdateScore")
 	float ScoreGoal(float shotDistance);
 };

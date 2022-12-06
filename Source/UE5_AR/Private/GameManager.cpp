@@ -8,6 +8,8 @@
 #include "CustomGameMode.h"
 #include "CustomGameState.h"
 #include "HelloARManager.h"
+#include <filesystem>
+#include <fstream>
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -22,6 +24,25 @@ void AGameManager::BeginPlay()
 {
 	// This function will transcend to call BeginPlay on all the actors within this structure
 	Super::BeginPlay();
+
+	// Check if a save file exists on this device, if so retrieve the previous high score
+	const auto targetFile = std::filesystem::current_path()/"score";
+	ACustomGameState* gs = Cast<ACustomGameState>(GetWorld()->GetGameState());
+	if(std::filesystem::exists(targetFile))
+	{
+		std::ifstream file;
+		file.open(targetFile.string().c_str(), std::ifstream::binary);
+		if(file.is_open())
+			file.read((char*)&gs->HighScore, sizeof(int32));
+		else GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::BeginPlay: save file could not open for reading."));
+	}
+	else
+	{
+		gs->HighScore = 0;
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("No save file found, loaded highscore is zero."));
+		std::ofstream createFile("score");
+		createFile.close();
+	}
 
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Game Manager Created and Initialised"));
 }
@@ -316,12 +337,29 @@ void AGameManager::EndGame_Implementation()
 	ACustomARPawn* pawn = Cast<ACustomARPawn>(controller->GetPawn());
 	if(!pawn)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::AcceptHoopAndStartGame: pawn cast failed"));
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: pawn cast failed"));
 		return;
 	}
 	pawn->SetInputState(InputState_::InputState_None);
 
 	// Hide the three pointer zone
 	pThreePointerZone->SetActorHiddenInGame(true);
+
+	// Write if highscore
+	ACustomGameState* gs = Cast<ACustomGameState>(GetWorld()->GetGameState());
+	if(gs->Score > gs->HighScore)
+	{
+		gs->HighScore = gs->Score;
+		const auto targetFile = std::filesystem::current_path()/"score";
+		if(std::filesystem::exists(targetFile))
+		{
+			std::ofstream file;
+			file.open(targetFile.string().c_str(), std::ofstream::binary);
+			if(file.is_open())
+				file.write((char*)&gs->HighScore, sizeof(int32));
+			else GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: save file could not open for writing."));
+		}
+		else GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: save file did not exists"));
+	}
 }
 
