@@ -50,6 +50,7 @@
 *.VC.db
 *.VC.opendb
 *.pdb
+*.module
 
 # Precompiled Assets
 SourceArt/**/*.png
