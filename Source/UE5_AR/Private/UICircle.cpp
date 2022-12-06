@@ -27,6 +27,11 @@ AUICircle::AUICircle()
 	pMaterial = HoopMaterialAsset.Object;
 }
 
+AUICircle::~AUICircle()
+{
+	vCustomUpdates.clear();
+}
+
 // Called when the game starts or when spawned
 void AUICircle::BeginPlay()
 {
@@ -42,5 +47,17 @@ void AUICircle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	for(const auto& function : vCustomUpdates)
+		function(this);
+}
+
+void AUICircle::SetColour(const FVector& colour) const
+{
+	pDynamicMaterial->SetVectorParameterValue(TEXT("Circle Colour"), colour);
+}
+
+void AUICircle::AddCustomUpdate(std::function<void(AUICircle* thisPtr)> function)
+{
+	vCustomUpdates.push_back(function);
 }
 

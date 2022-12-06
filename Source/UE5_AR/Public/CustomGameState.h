@@ -23,5 +23,5 @@ public:
 	int32 Score;
 
 	UFUNCTION(BlueprintCallable, Category="UpdateScore")
-	void UpdateScore(float shotDistance);
+	float ScoreGoal(float shotDistance);
 };

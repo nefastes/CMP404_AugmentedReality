@@ -77,3 +77,8 @@ void APlaceableActor::Tick(float DeltaTime)
 
 }
 
+FVector APlaceableActor::GetTriggerPosition_Implementation()
+{
+	return FVector(0,0,0);
+}
+

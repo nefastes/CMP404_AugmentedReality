@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include <vector>
 #include "UICircle.generated.h"
 
 UCLASS()
@@ -12,10 +13,12 @@ class UE5_AR_API AUICircle : public AActor
 	GENERATED_BODY()
 	UMaterial* pMaterial;
 	UMaterialInstanceDynamic* pDynamicMaterial;
+	std::vector<std::function<void(AUICircle* thisPtr)>> vCustomUpdates;
 	
 public:	
 	// Sets default values for this actor's properties
 	AUICircle();
+	~AUICircle();
 
 protected:
 	// Called when the game starts or when spawned
@@ -30,4 +33,11 @@ public:
 
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* StaticMeshComponent;
+
+	// A function to change the colour of the circle
+	void SetColour(const FVector& colour) const;
+
+	// This is just to avoid having to redefine the class multiple times or to define booleans for different behaviours
+	// Probably inefficient but handy
+	void AddCustomUpdate(std::function<void(AUICircle* thisPtr)> function);
 };

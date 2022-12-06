@@ -40,6 +40,8 @@ public:
 
 	UARPin* PinComponent;
 
-	
+	// I do not know how to find the trigger in the world, so I am calling this event to retrieve the location from BP_PlaceableActor
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlaceableActor", DisplayName = "Get Trigger Position")
+	FVector GetTriggerPosition();
 
 };

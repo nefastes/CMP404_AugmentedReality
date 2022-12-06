@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PlaceableActor.h"
+#include "UICircle.h"
 #include "ShootableActor.h"
 #include "GameFramework/Actor.h"
 #include "GameManager.generated.h"
@@ -13,9 +14,9 @@ class UE5_AR_API AGameManager : public AActor
 {
 	GENERATED_BODY()
 	APlaceableActor* pHoop;
+	AUICircle* pThreePointerZone;
 	TArray<AShootableActor*> aBasketballs;
 	bool bValidCollision;
-	float GameTimeLeft;
 	bool bGamePaused;
 	FTimerHandle Timer;
 	
@@ -64,6 +65,6 @@ public:
 	// Game logic functions
 	UFUNCTION(BlueprintCallable, Category="UFunctions")
 	FString GetTimeString() const;
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GameManager", DisplayName = "End Game Event")
 	void EndGame();
 };

@@ -67,12 +67,7 @@ void ACustomARPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	
 	// Initialise the pawn on the Hoop placement behaviours
-	// For editor debugging purposes, init on the ball shooting gameplay
-#ifdef _WIN64
-	SetInputState(InputState_::InputState_ShootBalls);
-#else
 	SetInputState(InputState_::InputState_DragHoop);
-#endif
 }
 
 void ACustomARPawn::SetInputState(InputState_ state)
