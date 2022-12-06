@@ -49,6 +49,7 @@
 *.sdf
 *.VC.db
 *.VC.opendb
+*.pdb
 
 # Precompiled Assets
 SourceArt/**/*.png
@@ -91,4 +92,3 @@ UE5_AR.code-workspace
 .DS_Store
 Content/.DS_Store
 UE5_AR.sln.DotSettings.user
-Plugins/Developer/
