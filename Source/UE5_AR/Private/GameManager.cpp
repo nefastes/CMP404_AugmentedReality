@@ -8,12 +8,10 @@
 #include "CustomGameMode.h"
 #include "CustomGameState.h"
 #include "HelloARManager.h"
-#include <filesystem>
-#include <fstream>
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
-AGameManager::AGameManager() : pHoop(nullptr), pThreePointerZone(nullptr), bValidCollision(false), bGamePaused(true)
+AGameManager::AGameManager() : pHoop(nullptr), pThreePointerZone(nullptr), bValidCollision(false), bGamePaused(true), saveFile(nullptr)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -24,25 +22,17 @@ void AGameManager::BeginPlay()
 {
 	// This function will transcend to call BeginPlay on all the actors within this structure
 	Super::BeginPlay();
-
+	
 	// Check if a save file exists on this device, if so retrieve the previous high score
-	const auto targetFile = std::filesystem::current_path()/"score";
 	ACustomGameState* gs = Cast<ACustomGameState>(GetWorld()->GetGameState());
-	if(std::filesystem::exists(targetFile))
-	{
-		std::ifstream file;
-		file.open(targetFile.string().c_str(), std::ifstream::binary);
-		if(file.is_open())
-			file.read((char*)&gs->HighScore, sizeof(int32));
-		else GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::BeginPlay: save file could not open for reading."));
-	}
-	else
+	saveFile = Cast<UCustomSaveGame>(UGameplayStatics::LoadGameFromSlot(FString("score"), 0));
+	if(!saveFile)
 	{
 		gs->HighScore = 0;
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("No save file found, loaded highscore is zero."));
-		std::ofstream createFile("score");
-		createFile.close();
+		saveFile = Cast<UCustomSaveGame>(UGameplayStatics::CreateSaveGameObject(UCustomSaveGame::StaticClass()));
 	}
+	else gs->HighScore = saveFile->HighScore;
 
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Game Manager Created and Initialised"));
 }
@@ -350,16 +340,13 @@ void AGameManager::EndGame_Implementation()
 	if(gs->Score > gs->HighScore)
 	{
 		gs->HighScore = gs->Score;
-		const auto targetFile = std::filesystem::current_path()/"score";
-		if(std::filesystem::exists(targetFile))
+		if(IsValid(saveFile))
 		{
-			std::ofstream file;
-			file.open(targetFile.string().c_str(), std::ofstream::binary);
-			if(file.is_open())
-				file.write((char*)&gs->HighScore, sizeof(int32));
-			else GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: save file could not open for writing."));
+			saveFile->HighScore = gs->HighScore;
+			const FString target("score");
+			UGameplayStatics::SaveGameToSlot(saveFile, target, 0);
 		}
-		else GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: save file did not exists"));
+		else GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: save file could not open for writing."));
 	}
 }
 

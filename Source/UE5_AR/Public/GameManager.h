@@ -6,6 +6,7 @@
 #include "PlaceableActor.h"
 #include "UICircle.h"
 #include "ShootableActor.h"
+#include "CustomSaveGame.h"
 #include "GameFramework/Actor.h"
 #include "GameManager.generated.h"
 
@@ -19,6 +20,8 @@ class UE5_AR_API AGameManager : public AActor
 	bool bValidCollision;
 	bool bGamePaused;
 	FTimerHandle Timer;
+	UPROPERTY()
+	UCustomSaveGame* saveFile;
 	
 public:	
 	// Sets default values for this actor's properties
