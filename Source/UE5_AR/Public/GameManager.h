@@ -70,4 +70,22 @@ public:
 	FString GetTimeString() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GameManager", DisplayName = "End Game Event")
 	void EndGame();
+
+	// Sounds
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	TArray<USoundBase*> aSoundsTwoPointers;
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	TArray<USoundBase*> aSoundsThreePointers;
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	TArray<USoundBase*> aSoundsBallBounces;
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	TArray<USoundBase*> aSoundsCommentatorEndGame;
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	USoundBase* SoundStartGame;
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	USoundBase* SoundEndGame;
+	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
+	USoundBase* MusicAmbient;
+	UFUNCTION(BlueprintCallable, Category="UFunctions")
+	void OnBallCollision(const FVector& impactNormal, const FVector& impactLocation);
 };

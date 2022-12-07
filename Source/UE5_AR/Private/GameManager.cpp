@@ -34,6 +34,9 @@ void AGameManager::BeginPlay()
 	}
 	else gs->HighScore = saveFile->HighScore;
 
+	// Play the ambient music
+	UGameplayStatics::PlaySound2D(this, MusicAmbient, .5f, 1.f, 0.f);
+
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Game Manager Created and Initialised"));
 }
 
@@ -217,8 +220,13 @@ bool AGameManager::AcceptHoopAndStartGame()
 		// Assign the time limit in seconds
 		GetWorldTimerManager().SetTimer(Timer, this, &AGameManager::EndGame, 60.f, false);
 		bGamePaused = false;
+
+		// Play the start sound
+		UGameplayStatics::PlaySound2D(this, SoundStartGame, 1.f, 1.f, 0.f);
 		return true;
 	}
+
+	// FAILED
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Please tap the screen to place a hoop before starting the game!"));
 	return false;
 }
@@ -290,6 +298,23 @@ void AGameManager::OnTriggerCollisionExit(UPrimitiveComponent* trigger, UPrimiti
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, FString::Printf(TEXT("Time Left: %f"), timeLeft));
 		GetWorldTimerManager().ClearTimer(Timer);
 		GetWorldTimerManager().SetTimer(Timer, this, &AGameManager::EndGame, timeLeft + timeToAdd, false);
+
+		// Play the according audio
+		const bool threePointer = timeToAdd > 1.f;
+		if(threePointer)
+		{
+			const int32 index = FMath::RandRange(0, aSoundsThreePointers.Num() - 1);
+			USoundBase* selectedSound = aSoundsThreePointers[index];
+			UGameplayStatics::PlaySound2D(this, selectedSound, 1.f, 1.f, 0.f);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("Three Pointer Sound")));
+		}
+		else
+		{
+			const int32 index = FMath::RandRange(0, aSoundsTwoPointers.Num() - 1);
+			USoundBase* selectedSound = aSoundsTwoPointers[index];
+			UGameplayStatics::PlaySound2D(this, selectedSound, 1.f, 1.f, 0.f);
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("Two Pointer Sound")));
+		}
 	}
 }
 
@@ -318,9 +343,25 @@ FString AGameManager::GetTimeString() const
 	return time;
 }
 
+void AGameManager::OnBallCollision(const FVector& impactNormal, const FVector& impactLocation)
+{
+	// Check for the impact normal to be bigger than 25
+	constexpr float impactCheck = 25.f;
+	// Don't ask why, but that's the sweet spot to avoid playing the sound when constantly colliding with the floor
+	// GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("Impact Normal Length: %f"), impactNormal.Length()));
+	if(impactNormal.Length() < impactCheck) return;
+	
+	const int32 index = FMath::RandRange(0, aSoundsBallBounces.Num() - 1);
+	USoundBase* selectedSound = aSoundsBallBounces[index];
+	UGameplayStatics::PlaySoundAtLocation(this, selectedSound, impactLocation, .5f, 1.f, 0.f);
+}
+
 void AGameManager::EndGame_Implementation()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("End Game Reached!"));
+
+	// Play the end sound
+	UGameplayStatics::PlaySound2D(this, SoundEndGame, 1.f, 1.f, 0.f);
 	
 	// Disable inputs
 	const APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
