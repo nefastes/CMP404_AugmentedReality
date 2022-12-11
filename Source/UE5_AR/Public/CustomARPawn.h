@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CustomActor.h"
 #include "GameFramework/Pawn.h"
 #include "UICircle.h"
 #include "CustomARPawn.generated.h"

@@ -44,11 +44,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "GameModeBase", DisplayName = "Start Play")
 		void StartPlayEvent();
 
-	// /**
-	//  * @brief A Dummy event for spawning ACustomActor.
-	//  */
-	// UFUNCTION(BlueprintCallable, Category="Spawn")
-	// 	virtual void SpawnCube();
 	
 	virtual void Tick(float DeltaSeconds) override;
 	
