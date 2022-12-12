@@ -27,6 +27,20 @@ APlaceableActor::APlaceableActor() :
 	pMaterial = HoopMaterialAsset.Object;
 }
 
+void APlaceableActor::SetSelected(bool s)
+{
+	bSelected = s;
+
+	// Change the color of the hoop if it is selected
+	if (bSelected) pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 1.f, 0.f));
+	else pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
+}
+
+bool APlaceableActor::IsSelected()
+{
+	return bSelected;
+}
+
 // Called when the game starts or when spawned
 void APlaceableActor::BeginPlay()
 {
@@ -45,7 +59,7 @@ void APlaceableActor::Tick(float DeltaTime)
 	// Making sure the actor remains on the ARPin that has been found.
 	if(PinComponent)
 	{
-		auto TrackingState = PinComponent->GetTrackingState();
+		const auto TrackingState = PinComponent->GetTrackingState();
 		
 		switch (TrackingState)
 		{
@@ -59,26 +73,11 @@ void APlaceableActor::Tick(float DeltaTime)
 			break;
 		}
 	}
-
-	// Change the color of the hoop based on the camera's proximity
-	if (!bSelected)
-	{
-		// Change the colour of the actor based on the player distance
-		auto controller = UGameplayStatics::GetPlayerController(this, 0);
-		FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
-		FVector actorPos = GetActorLocation();
-		FVector diff = actorPos - cameraPos;
-		if (diff.GetAbs().Length() < 100.0)
-			pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(0.f, 0.f, 1.f));
-		else
-			pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 0.f, 0.f));
-	}
-	else pDynamicMaterial->SetVectorParameterValue(TEXT("InputColour"), FVector(1.f, 1.f, 0.f));
-
 }
 
 FVector APlaceableActor::GetTriggerPosition_Implementation()
 {
+	// This is empty, not called anyway. This is done in the blueprints for simplicity.
 	return FVector(0,0,0);
 }
 

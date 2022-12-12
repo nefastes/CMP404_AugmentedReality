@@ -47,6 +47,7 @@ void AUICircle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Perform any given custom update
 	for(const auto& function : vCustomUpdates)
 		function(this);
 }

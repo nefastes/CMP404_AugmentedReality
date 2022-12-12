@@ -11,7 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
-AGameManager::AGameManager() : pHoop(nullptr), pThreePointerZone(nullptr), bValidCollision(false), bGamePaused(true), saveFile(nullptr)
+AGameManager::AGameManager() : pHoop(nullptr), pThreePointerZone(nullptr), bValidCollision(false), bGamePaused(true), saveFile(nullptr), SoundStartGame(nullptr), SoundEndGame(nullptr), MusicAmbient(nullptr)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -54,20 +54,20 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Line Trace Reached"));
 
 	//Basic variables for functionality
-	APlayerController* playerController = UGameplayStatics::GetPlayerController(this, 0);
+	const APlayerController* playerController = UGameplayStatics::GetPlayerController(this, 0);
 	FVector CameraPos;
 	FVector CameraDir;
 
 	//Gets the screen touch in world space and the tracked objects from a line trace from the touch
 	UGameplayStatics::DeprojectScreenToWorld(playerController, ScreenPos, CameraPos, CameraDir);
 	// Notice that this LineTrace is in the ARBluePrintLibrary - this means that it's exclusive only for objects tracked by ARKit/ARCore
-	auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(ScreenPos, false, false, false, true);
+	const auto TraceResult = UARBlueprintLibrary::LineTraceTrackedObjects(ScreenPos, false, false, false, true);
 
 	//Checks if the location is valid
 	if (TraceResult.IsValidIndex(0))
 	{
 		// Get the first found object in the line trace - ignoring the rest of the array elements
-		auto TrackedTF = TraceResult[0].GetLocalToWorldTransform();
+		const auto TrackedTF = TraceResult[0].GetLocalToWorldTransform();
 
 		if (FVector::DotProduct(TrackedTF.GetRotation().GetUpVector(), CameraDir) < 0)
 		{
@@ -79,7 +79,7 @@ void AGameManager::LineTraceSpawnActor(FVector2D ScreenPos)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::White, TEXT("ARPin is valid"));
 				//If the pin is valid 
-				auto PinTF = ActorPin->GetLocalToWorldTransform();
+				const auto PinTF = ActorPin->GetLocalToWorldTransform();
 				//Spawn a new Actor at the location if not done yet
 				if (!pHoop)
 				{
@@ -165,6 +165,7 @@ void AGameManager::TogglePause()
 bool AGameManager::AcceptHoopAndStartGame()
 {
 #ifdef _WIN64
+	// For debugging through the editor only
 	TArray<AActor*> ActorsToFind;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlaceableActor::StaticClass(), ActorsToFind);
 	pHoop = Cast<APlaceableActor>(ActorsToFind[0]);
@@ -200,6 +201,7 @@ bool AGameManager::AcceptHoopAndStartGame()
 			pThreePointerZone->SetActorScale3D(FVector(14.478f, 14.478f, 14.478f)); // Originally half a meter, scaled to three pointer distance
 			pThreePointerZone->AddCustomUpdate([](AUICircle* thisPtr)
 			{
+				// Give it a custom update function to change its colour when the player is further than the three pointer limit
 				const auto controller = UGameplayStatics::GetPlayerController(thisPtr, 0);
 				const FVector cameraPos = controller->PlayerCameraManager->GetCameraLocation();
 				const FVector actorPos = thisPtr->GetActorLocation();
@@ -303,16 +305,12 @@ void AGameManager::OnTriggerCollisionExit(UPrimitiveComponent* trigger, UPrimiti
 		const bool threePointer = timeToAdd > 1.f;
 		if(threePointer)
 		{
-			const int32 index = FMath::RandRange(0, aSoundsThreePointers.Num() - 1);
-			USoundBase* selectedSound = aSoundsThreePointers[index];
-			UGameplayStatics::PlaySound2D(this, selectedSound, 1.f, 1.f, 0.f);
+			PlayRandomAudioFrom(aSoundsThreePointers, 1.f);
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("Three Pointer Sound")));
 		}
 		else
 		{
-			const int32 index = FMath::RandRange(0, aSoundsTwoPointers.Num() - 1);
-			USoundBase* selectedSound = aSoundsTwoPointers[index];
-			UGameplayStatics::PlaySound2D(this, selectedSound, 1.f, 1.f, 0.f);
+			PlayRandomAudioFrom(aSoundsTwoPointers, 1.f);
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("Two Pointer Sound")));
 		}
 	}
@@ -343,7 +341,14 @@ FString AGameManager::GetTimeString() const
 	return time;
 }
 
-void AGameManager::OnBallCollision(const FVector& impactNormal, const FVector& impactLocation)
+void AGameManager::PlayRandomAudioFrom(const TArray<USoundBase*>& soundBank, const float volumeMultiplier) const
+{
+	const int32 index = FMath::RandRange(0, soundBank.Num() - 1);
+	USoundBase* selectedSound = soundBank[index];
+	UGameplayStatics::PlaySound2D(this, selectedSound, volumeMultiplier, 1.f, 0.f);
+}
+
+void AGameManager::OnBallAnyCollision(const FVector& impactNormal, const FVector& impactLocation)
 {
 	// Check for the impact normal to be bigger than 25
 	constexpr float impactCheck = 25.f;
@@ -351,9 +356,7 @@ void AGameManager::OnBallCollision(const FVector& impactNormal, const FVector& i
 	// GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, FString::Printf(TEXT("Impact Normal Length: %f"), impactNormal.Length()));
 	if(impactNormal.Length() < impactCheck) return;
 	
-	const int32 index = FMath::RandRange(0, aSoundsBallBounces.Num() - 1);
-	USoundBase* selectedSound = aSoundsBallBounces[index];
-	UGameplayStatics::PlaySoundAtLocation(this, selectedSound, impactLocation, .5f, 1.f, 0.f);
+	PlayRandomAudioFrom(aSoundsBallBounces, .5f);
 }
 
 void AGameManager::EndGame_Implementation()
@@ -390,4 +393,3 @@ void AGameManager::EndGame_Implementation()
 		else GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("Error at AGameManager::EndGame_Implementation: save file could not open for writing."));
 	}
 }
-

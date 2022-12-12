@@ -20,8 +20,7 @@ class UE5_AR_API AGameManager : public AActor
 	bool bValidCollision;
 	bool bGamePaused;
 	FTimerHandle Timer;
-	UPROPERTY()
-	UCustomSaveGame* saveFile;
+	UPROPERTY() UCustomSaveGame* saveFile;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -29,11 +28,11 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual void BeginPlay() final override;
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) final override;
 
 	// Functions to spawn a placeable actor given a screen location
 	void LineTraceSpawnActor(FVector2D ScreenPos);
@@ -86,6 +85,7 @@ public:
 	USoundBase* SoundEndGame;
 	UPROPERTY(Category="Sounds",EditAnywhere,BlueprintReadWrite)
 	USoundBase* MusicAmbient;
-	UFUNCTION(BlueprintCallable, Category="UFunctions")
-	void OnBallCollision(const FVector& impactNormal, const FVector& impactLocation);
+	void PlayRandomAudioFrom(const TArray<USoundBase*>& soundBank, const float volumeMultiplier) const;
+	UFUNCTION(BlueprintCallable, Category = "UFunctions")
+		void OnBallAnyCollision(const FVector& impactNormal, const FVector& impactLocation);
 };

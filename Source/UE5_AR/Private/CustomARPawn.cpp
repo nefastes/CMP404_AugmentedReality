@@ -104,28 +104,28 @@ void ACustomARPawn::SetInputState(InputState_ state)
 	}
 }
 
-bool ACustomARPawn::WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult)
+bool ACustomARPawn::WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult) const
 {
 	APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
 
 	// Perform a deprojection, taking a 2d clicked point on the screen and finding a world position
 	FVector worldPosition, worldDirection;
-	FVector2D touchPosition2D(InTouchPosition);
+	const FVector2D touchPosition2D(InTouchPosition);
 	bool success = UGameplayStatics::DeprojectScreenToWorld(controller, touchPosition2D, worldPosition, worldDirection);
 	if (!success) return false;
 
 	// Trace the input
-	FVector traceEndVector = worldPosition + worldDirection * 1000.f;
+	const FVector traceEndVector = worldPosition + worldDirection * 1000.f;
 	success = GetWorld()->LineTraceSingleByChannel(OutResult, worldPosition, traceEndVector, ECollisionChannel::ECC_WorldDynamic);
 	return success;
 }
 
 void ACustomARPawn::OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
-	auto Temp = GetWorld()->GetAuthGameMode();
-	auto GameMode = Cast<ACustomGameMode>(Temp);
-	auto GameManager = GameMode->GetGameManager();
-	auto ARManager = GameMode->GetARManager();
+	const auto Temp = GetWorld()->GetAuthGameMode();
+	const auto GameMode = Cast<ACustomGameMode>(Temp);
+	const auto GameManager = GameMode->GetGameManager();
+	const auto ARManager = GameMode->GetARManager();
 
 	if (!GameManager || !ARManager)
 	{
@@ -167,10 +167,10 @@ void ACustomARPawn::OnHoopReleased(const ETouchIndex::Type FingerIndex, const FV
 {
 	if (pDraggedActor)
 	{
-		auto Temp = GetWorld()->GetAuthGameMode();
-		auto GameMode = Cast<ACustomGameMode>(Temp);
-		auto GameManager = GameMode->GetGameManager();
-		auto ARManager = GameMode->GetARManager();
+		const auto Temp = GetWorld()->GetAuthGameMode();
+		const auto GameMode = Cast<ACustomGameMode>(Temp);
+		const auto GameManager = GameMode->GetGameManager();
+		const auto ARManager = GameMode->GetARManager();
 		
 		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
@@ -201,9 +201,9 @@ void ACustomARPawn::OnShootDrag(const ETouchIndex::Type FingerIndex, const FVect
 void ACustomARPawn::OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos)
 {
 	// Shoot a ball on touch released
-	auto Temp = GetWorld()->GetAuthGameMode();
-	auto GameMode = Cast<ACustomGameMode>(Temp);
-	auto GameManager = GameMode->GetGameManager();
+	const auto Temp = GetWorld()->GetAuthGameMode();
+	const auto GameMode = Cast<ACustomGameMode>(Temp);
+	const auto GameManager = GameMode->GetGameManager();
 
 	if(!GameManager)
 	{

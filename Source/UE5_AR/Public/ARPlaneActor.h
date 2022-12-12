@@ -51,16 +51,16 @@ public:
 	UPROPERTY(Category = GoogleARCorePlaneActor, EditAnywhere, BlueprintReadWrite)
 		UMaterialInstanceDynamic* PlaneMaterial;
 
-
 	UMaterial* Material_;
+
 protected:
 	// Called at the time of spawning
-	virtual void BeginPlay() override;
+	virtual void BeginPlay() final override;
 
 public:
 
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) final override;
 
 	UFUNCTION(BlueprintCallable, Category = "GoogleARCorePlaneActor", meta = (Keywords = "googlear arcore plane"))
 		void UpdatePlanePolygonMesh();

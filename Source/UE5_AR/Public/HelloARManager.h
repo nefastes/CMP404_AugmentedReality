@@ -16,7 +16,6 @@ UCLASS()
 class UE5_AR_API AHelloARManager : public AActor
 {
 	GENERATED_BODY()
-	
 	bool bAllowPlaneUpdate;
 
 public:	
@@ -25,12 +24,13 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual void BeginPlay() final override;
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) final override;
 
+	// Functions to enable/disable plane tracking
 	void AllowPlaneUpdate(bool allow);
 	void SetPlanesActive(bool active);
 
@@ -38,10 +38,7 @@ public:
 	UPROPERTY(Category = "SceneComp", VisibleAnywhere, BlueprintReadWrite)
 		USceneComponent* SceneComponent;
 
-	const UARTexture* GetDepthMap() const; 
-
 protected:
-	
 	// Updates the plane actors on every frame as long as the AR Session is running
 	void UpdatePlaneActors();
 
@@ -54,15 +51,10 @@ protected:
 	//Base plane actor for geometry detection
 	AARPlaneActor* PlaneActor;
 
-
 	//Map of geometry planes
 	TMap<UARPlaneGeometry*, AARPlaneActor*> PlaneActors;
 
 	//Index for plane colours adn array of colours
 	int PlaneIndex = 0;
 	TArray<FColor> PlaneColors;
-
-	// Store the depth map on update
-	UARTexture* pDepthMap, *pCameraMap;
-
 };

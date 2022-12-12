@@ -24,10 +24,10 @@ ACustomGameMode::ACustomGameMode():
 
 void ACustomGameMode::StartPlay() 
 {
-	SpawnInitialActors();
-
-	// This is called before BeginPlay
-	StartPlayEvent();
+	// Spawn the main actors: AR Manager and Game Manager
+	//pARManager = NewObject<AHelloARManager>();								// NO! Otherwise their StartPlay does not get called!
+	pARManager = GetWorld()->SpawnActor<AHelloARManager>();						// In charge of all the AR side functionalities
+	pGameManager = GetWorld()->SpawnActor<AGameManager>(GameManagerToSpawn);	// In charge of the game's logic
 
 	// This function will transcend to call BeginPlay on all the actors 
 	Super::StartPlay();
@@ -43,25 +43,9 @@ AGameManager* ACustomGameMode::GetGameManager() const
 	return pGameManager;
 }
 
-// An implementation of the StartPlayEvent which can be triggered by calling StartPlayEvent() 
-void ACustomGameMode::StartPlayEvent_Implementation() 
-{
-	// Start a timer which will call the SpawnCube Function every 4 seconds
-	//GetWorldTimerManager().SetTimer(Ticker, this, &ACustomGameMode::SpawnCube, 4.0f, true, 0.0f);
-}
-
 void ACustomGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-}
-
-void ACustomGameMode::SpawnInitialActors()
-{
-	// This function spawns the required actors to run the game
-	
-	//pARManager = NewObject<AHelloARManager>();								// NO! Otherwise their StartPlay does not get called!
-	pARManager = GetWorld()->SpawnActor<AHelloARManager>();						// In charge of all the AR side functionalities
-	pGameManager = GetWorld()->SpawnActor<AGameManager>(GameManagerToSpawn);	// In charge of the game's logic
 }
 
 void ACustomGameMode::ResetMode()

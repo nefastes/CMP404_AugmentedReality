@@ -5,7 +5,7 @@
 
 
 ACustomGameState::ACustomGameState() :
-	Score(0)
+	Score(0), HighScore(0)
 {
 }
 

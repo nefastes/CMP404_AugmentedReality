@@ -11,9 +11,7 @@
 
 // Sets default values
 AHelloARManager::AHelloARManager() :
-bAllowPlaneUpdate(true),
-pDepthMap(nullptr),
-pCameraMap(nullptr)
+bAllowPlaneUpdate(true)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -25,8 +23,6 @@ pCameraMap(nullptr)
 	// This way, unreal will notify your artist if the asset is being used and what can be used to replace it.
 	static ConstructorHelpers::FObjectFinder<UARSessionConfig> ConfigAsset(TEXT("ARSessionConfig'/Game/Blueprints/CustomARSessionConfig.CustomARSessionConfig'"));
 	Config = ConfigAsset.Object;
-	//Config->bUseSceneDepthForOcclusion = true;	// Already done in config file
-	//Config->SetSessionTrackingFeatureToEnable(EARSessionTrackingFeature::SceneDepth);
 
 
 	//Populate the plane colours array
@@ -50,15 +46,12 @@ void AHelloARManager::BeginPlay()
 
 	//Start the AR Session
 	UARBlueprintLibrary::StartARSession(Config);
-
-	
 }
 
 // Called every frame
 void AHelloARManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 
 	switch (UARBlueprintLibrary::GetARSessionStatus().Status)
 	{
@@ -85,12 +78,6 @@ void AHelloARManager::SetPlanesActive(bool active)
 {
 	for(auto& plane : PlaneActors)
 		plane.Value->SetActorHiddenInGame(!active);
-}
-
-
-const UARTexture* AHelloARManager::GetDepthMap() const
-{
-	return pDepthMap;
 }
 
 //Updates the geometry actors in the world
@@ -186,5 +173,4 @@ void AHelloARManager::ResetARCoreSession()
 	
 	Planes.Empty();
 	PlaneActors.Empty();
-
 }

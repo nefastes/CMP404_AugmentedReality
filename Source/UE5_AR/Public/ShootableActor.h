@@ -18,11 +18,11 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual void BeginPlay() final override;
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) final override;
 
 	UPROPERTY(Category = "myCategory", VisibleAnywhere, BlueprintReadWrite)
 	USceneComponent* SceneComponent;

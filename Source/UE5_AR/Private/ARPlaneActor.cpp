@@ -55,7 +55,6 @@ void AARPlaneActor::Tick(float DeltaTime)
 
 	switch (ARCorePlaneObject->GetTrackingState())
 	{
-
 	case EARTrackingState::Tracking:
 		PlanePolygonMeshComponent->SetVisibility(true);
 		break;

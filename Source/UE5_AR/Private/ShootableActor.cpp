@@ -30,27 +30,21 @@ AShootableActor::AShootableActor() : DeathClock(0.f)
 void AShootableActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void AShootableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	DeathClock += DeltaTime;
-	if(DeathClock > 10.f)
+	DeathClock += DeltaTime;	// Perhaps some sort of deathclock?
+	if(DeathClock > 10.f)		// Dies after 10 seconds
 	{
-		auto Temp = GetWorld()->GetAuthGameMode();
-		auto GameMode = Cast<ACustomGameMode>(Temp);
-		auto GameManager = GameMode->GetGameManager();
+		const auto Temp = GetWorld()->GetAuthGameMode();
+		const auto GameMode = Cast<ACustomGameMode>(Temp);
+		const auto GameManager = GameMode->GetGameManager();
 
-		if(!GameManager)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnShootReleased: Game manager was NULL"));
-			return;
-		}
-		StaticMeshComponent->PutRigidBodyToSleep();
-		StaticMeshComponent->SetSimulatePhysics(false);
+		//StaticMeshComponent->PutRigidBodyToSleep();
+		//StaticMeshComponent->SetSimulatePhysics(false);	// Unnecessary as they are being destroyed anyways.
 		this->Destroy();
 		GameManager->RemoveBall(this);
 	}

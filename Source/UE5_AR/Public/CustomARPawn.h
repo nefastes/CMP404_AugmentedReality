@@ -21,8 +21,6 @@ UCLASS()
 class UE5_AR_API ACustomARPawn : public APawn
 {
 	GENERATED_BODY()
-
-private:
 	APlaceableActor* pDraggedActor;
 	float ScreenTouchHoldTime;
 	AUICircle* pUICircle;
@@ -35,24 +33,25 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	bool WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult);
+	// Function to test if any object is being hit from a screen touch
+	bool WorldHitTest(const FVector& InTouchPosition, FHitResult& OutResult) const;
 
 	// The following functions determine the player inputs/behaviours
-	virtual void OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnHoopDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnHoopReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	void OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	void OnHoopDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	void OnHoopReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 
-	virtual void OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnShootDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
-	virtual void OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	void OnShootPressed(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	void OnShootDrag(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
+	void OnShootReleased(const ETouchIndex::Type FingerIndex, const FVector ScreenPos);
 	
 	
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) final override;
 
 	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) final override;
 
 	// Called to change the kind of inputs the player does
 	UFUNCTION(BlueprintCallable, Category="UFunctions")
