@@ -85,6 +85,9 @@ void ACustomARPawn::SetInputState(InputState_ state)
 
 	// Reset the hold time tracker for the new inputs
 	ScreenTouchHoldTime = 0.f;
+
+	// Hide the UI Circle in the event that inputs are being changed while the user was charging an impulse
+	if(pUICircle) pUICircle->SetActorHiddenInGame(true);
 	
 	// Bind the touches to the new behaviours
 	switch (state)
@@ -125,9 +128,8 @@ void ACustomARPawn::OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVe
 	const auto Temp = GetWorld()->GetAuthGameMode();
 	const auto GameMode = Cast<ACustomGameMode>(Temp);
 	const auto GameManager = GameMode->GetGameManager();
-	const auto ARManager = GameMode->GetARManager();
 
-	if (!GameManager || !ARManager)
+	if (!GameManager)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnHoopPressed: One of the managers was NULL"));
 		return;
@@ -147,8 +149,6 @@ void ACustomARPawn::OnHoopPressed(const ETouchIndex::Type FingerIndex, const FVe
 			UARBlueprintLibrary::RemovePin((pDraggedActor->PinComponent));
 			pDraggedActor->PinComponent = nullptr;
 			pDraggedActor->SetSelected(true);
-			ARManager->AllowPlaneUpdate(false);
-			ARManager->SetPlanesActive(false);
 		}
 	}
 }
@@ -170,19 +170,16 @@ void ACustomARPawn::OnHoopReleased(const ETouchIndex::Type FingerIndex, const FV
 		const auto Temp = GetWorld()->GetAuthGameMode();
 		const auto GameMode = Cast<ACustomGameMode>(Temp);
 		const auto GameManager = GameMode->GetGameManager();
-		const auto ARManager = GameMode->GetARManager();
 		
 		pDraggedActor->SetSelected(false);
 		pDraggedActor = nullptr;
 		
-		if (!GameManager || !ARManager)
+		if (!GameManager)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Error at ACustomARPawn::OnHoopReleased: One of the managers was NULL"));
 			return;
 		}
 		GameManager->LineTraceSpawnActor(FVector2d(ScreenPos));
-		ARManager->AllowPlaneUpdate(true);
-		ARManager->SetPlanesActive(true);
 	}
 }
 

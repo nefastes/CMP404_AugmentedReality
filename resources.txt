@@ -10,3 +10,7 @@ https://www.youtube.com/watch?v=R5hTa8wUyqc
 
 Wii Sport Resort Sounds:
 Basketball related: https://www.sounds-resource.com/wii/wiisportsresort/sound/30410/
+
+ARCore fundamental concepts:
+https://developers.google.com/ar/develop/fundamentals
+https://www.researchgate.net/publication/349108790_GEUINF_Real-Time_Visualization_of_Indoor_Facilities_Using_Mixed_Reality
